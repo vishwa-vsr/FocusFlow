@@ -4076,15 +4076,15 @@ async function updateDangerCounts() {
             $("danger-count-rules").textContent = totalRules === 1 ? "1 active rule" : `${totalRules} active rules`;
         }
 
-        const locRes = await gLocal(["focusHistory", "customCategories"]);
+        const locRes = await gLocal(["focusHistory", "siteCategories"]);
         const fHist = locRes && locRes.focusHistory ? locRes.focusHistory : [];
         if ($("danger-count-focus")) {
             const count = Array.isArray(fHist) ? fHist.length : 0;
             $("danger-count-focus").textContent = count === 1 ? "1 session" : `${count} sessions`;
         }
 
-        const customCats = locRes && locRes.customCategories ? locRes.customCategories : {};
-        const catKeys = Object.keys(customCats);
+        const customCats = locRes && locRes.siteCategories ? locRes.siteCategories : {};
+        const catKeys = Object.keys(customCats).filter(k => !k.startsWith("www."));
         if ($("danger-count-cats")) {
             $("danger-count-cats").textContent = catKeys.length === 1 ? "1 custom tag" : `${catKeys.length} custom tags`;
         }
@@ -4525,6 +4525,8 @@ btnRemovePin && btnRemovePin.addEventListener("click", async () => {
         window.siteCats = siteCategories;
         window.hiddenDefaultSites = hiddenDefaultSites;
         await sLocal({ siteCategories: {}, hiddenDefaultSites: [] });
+        await sSync({ customCategories: {} });
+        if (typeof applyCustomCategories === "function") applyCustomCategories({});
         await msg("TRIGGER_DNR_UPDATE");
         renderCategories();
         loadAnalytics();

@@ -4463,22 +4463,47 @@ if (btnSaveSetEl) {
 $("btn-pin") && $("btn-pin").addEventListener("click", async () => {
     var e = $("pin1").value.trim(),
         t = $("pin2").value.trim();
-    if (!/^\d{4,6}$/.test(e)) toast(t_("pin4to6Digits"), "er");
-    else if (e !== t) toast(t_("pinsDoNotMatch"), "er");
+    if (!/^\d{4,6}$/.test(e)) toast(t_("pin4to6Digits") || "PIN must be 4 to 6 digits", "er");
+    else if (e !== t) toast(t_("pinsDoNotMatch") || "PINs do not match", "er");
     else {
         var a = (await gSync(["settings"])).settings || {};
         a.passcodeHash = await hashPin(e), a.passcodeEnabled = !0, await sSync({
             settings: a
-        }), $("pin1").value = "", $("pin2").value = "", toast(t_("pinSavedActive"), "ok"), loadExtendedSettings()
+        }), $("pin1").value = "", $("pin2").value = "", toast(t_("pinSavedActive") || "PIN saved and active", "ok"), loadExtendedSettings()
     }
-}), $("btn-rm-pin") && $("btn-rm-pin").addEventListener("click", async () => {
+});
+
+const btnChangePin = $("btn-change-pin") || $("btn-chg-pin");
+btnChangePin && btnChangePin.addEventListener("click", async () => {
+    if (await promptPinIfEnabled("lockDanger")) {
+        if ($("pin-setup-box")) $("pin-setup-box").style.display = "flex";
+        if ($("pin-manage-box")) $("pin-manage-box").style.display = "none";
+        const actionsDiv = document.getElementById("pin-actions-div");
+        if (actionsDiv) actionsDiv.style.display = "none";
+        if ($("pin1")) {
+            $("pin1").value = "";
+            $("pin1").focus();
+        }
+        if ($("pin2")) $("pin2").value = "";
+        toast(t_("enterNewPin") || "Enter your new 4-6 digit PIN", "info");
+    }
+});
+
+const btnRemovePin = $("btn-remove-pin") || $("btn-rm-pin");
+btnRemovePin && btnRemovePin.addEventListener("click", async () => {
     if (await promptPinIfEnabled("lockDanger")) {
         var e = (await gSync(["settings"])).settings || {};
-        e.passcodeHash = "", e.passcodeEnabled = !0, await sSync({
+        e.passcodeHash = "";
+        e.passcodeEnabled = false;
+        await sSync({
             settings: e
-        }), toast(t_("pinRemoved"), "ok"), loadExtendedSettings()
+        });
+        toast(t_("pinRemoved") || "PIN Removed", "ok");
+        loadExtendedSettings();
     }
-}), ($("btn-clr-data") || $("btn-rst-stats")) && ($("btn-clr-data") || $("btn-rst-stats")).addEventListener("click", async () => {
+});
+
+($("btn-clr-data") || $("btn-rst-stats")) && ($("btn-clr-data") || $("btn-rst-stats")).addEventListener("click", async () => {
     if (await promptPinIfEnabled("lockDanger") && await showConfirm(t_("resetAllStats"), t_("resetStatsConfirm"), { isDestructive: true, confirmText: t_("resetConfirmBtn") })) {
         await msg("CLEAR_ALL_DATA");
         toast(t_("statsReset"), "ok");

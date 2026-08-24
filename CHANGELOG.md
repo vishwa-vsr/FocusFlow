@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [10.1.1] - 2026-08-24
 
 ### Fixed
-- **PIN Code Security & Save Fix**: Fixed a critical bug in the Settings panel where attempting to save a 4-to-6 digit PIN code failed silently due to an undefined hash function reference (`sha256Hex`). Restored secure salted PBKDF2 hashing (`hashPin`) so PIN saving, locking, and verification work smoothly across both Dashboard and Popup views.
+- **PIN Code Security, Change & Remove Actions**: Fixed critical bugs in the Access Control & Safety settings where saving a 4-to-6 digit PIN code crashed due to an undefined function (`sha256Hex`), and clicking "Change PIN" or "Remove PIN" was unresponsive due to missing event listeners and element ID mismatches. All PIN actions (Save, Change, Remove, and Verification Gate) are now fully functional and verified.
 - **Built-in Category Removal & Focus Unblocking**: Fixed an issue where deleting a default website (like YouTube) from the Distractions list only hid it from view while the background Focus Mode blocker continued to block it. Removals are now fully synchronized with the background engine so deleting a site from Distractions immediately unblocks it in Focus Mode.
 - **Danger Zone Category Reset**: Fixed the "Clear Categories" button under Settings > Danger Zone to properly clear custom tags and reset all website categories back to initial default starter assumptions.
 

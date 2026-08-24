@@ -723,6 +723,18 @@ let isPrivacyActive = _loc.privacyModeActive === true;
     const e = _loc.allowList || [];
     const effectiveAllowList = [...e];
     const a = _loc.siteCategories || {};
+    const hiddenDefaultSites = _loc.hiddenDefaultSites || [];
+
+    const isHiddenDefault = (dom) => {
+        if (!dom || !hiddenDefaultSites.length) return false;
+        const lower = dom.toLowerCase().trim();
+        if (hiddenDefaultSites.includes(lower)) return true;
+        const parts = lower.split(".");
+        for (let idx = 1; idx < parts.length - 1; idx++) {
+            if (hiddenDefaultSites.includes(parts.slice(idx).join("."))) return true;
+        }
+        return false;
+    };
     
     const isAllowListed = (dom) => {
         if (!dom) return false;
@@ -758,13 +770,13 @@ let isPrivacyActive = _loc.privacyModeActive === true;
                 const ap2 = await getActivePreset();
                 t = (ap2 && Array.isArray(ap2.blockCats)) ? ap2.blockCats : (o.focusBlockCats || ["distraction"]);
             }
-            Object.entries(AUTO_CATEGORIES).forEach(([e, a]) => {
-                if (!isAllowListed(e)) {
-                    t.includes(a) && (i[e] = BLOCKED_PAGE + "?r=strict");
+            Object.entries(AUTO_CATEGORIES).forEach(([e, aCat]) => {
+                if (!isAllowListed(e) && !isHiddenDefault(e)) {
+                    t.includes(aCat) && (i[e] = BLOCKED_PAGE + "?r=strict");
                 }
-            }), Object.entries(a).forEach(([e, a]) => {
+            }), Object.entries(a).forEach(([e, aCat]) => {
                 if (!isAllowListed(e)) {
-                    t.includes(a) ? i[e] = BLOCKED_PAGE + "?r=strict" : delete i[e];
+                    t.includes(aCat) ? i[e] = BLOCKED_PAGE + "?r=strict" : delete i[e];
                 }
             })
         }
@@ -2392,22 +2404,28 @@ async function handle(t, e) {
         }
         case "CATEGORIZE_SITE": {
             const {
-                siteCategories: e = {}
-            } = await gLocal(["siteCategories"]);
+                siteCategories: e = {},
+                hiddenDefaultSites: h = []
+            } = await gLocal(["siteCategories", "hiddenDefaultSites"]);
             const clean = sanitizeDomain(t.domain);
             e[t.domain] = t.category;
             e[clean] = t.category;
+            const noWww = clean.replace(/^www\./, "");
             if (clean.startsWith("www.")) {
-                e[clean.replace(/^www\./, "")] = t.category;
+                e[noWww] = t.category;
             } else {
                 e["www." + clean] = t.category;
             }
+            const newHidden = h.filter(d => d !== clean && d !== noWww && d !== t.domain);
             await sLocal({
-                siteCategories: e
+                siteCategories: e,
+                hiddenDefaultSites: newHidden
             });
             if (_storCache.local && _storCache.local.data) {
                 _storCache.local.data.siteCategories = e;
+                _storCache.local.data.hiddenDefaultSites = newHidden;
             }
+            await updateRules();
             return {
                 ok: !0
             };

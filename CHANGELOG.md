@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.1.1] - 2026-08-24
+
+### Fixed
+- **PIN Code Security & Save Fix**: Fixed a critical bug in the Settings panel where attempting to save a 4-to-6 digit PIN code failed silently due to an undefined hash function reference (`sha256Hex`). Restored secure salted PBKDF2 hashing (`hashPin`) so PIN saving, locking, and verification work smoothly across both Dashboard and Popup views.
+- **Built-in Category Removal & Focus Unblocking**: Fixed an issue where deleting a default website (like YouTube) from the Distractions list only hid it from view while the background Focus Mode blocker continued to block it. Removals are now fully synchronized with the background engine so deleting a site from Distractions immediately unblocks it in Focus Mode.
+
 ## [10.1.0] - 2026-08-18
 
 ### Changed

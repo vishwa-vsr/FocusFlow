@@ -993,8 +993,12 @@ async function tagSite(e, t) {
     }
     window.siteCategories = siteCategories;
     window.siteCats = siteCategories;
+    const cleanNoWww = cleanDom.replace(/^www\./, "");
     if (hiddenDefaultSites.includes(cleanDom)) {
         hiddenDefaultSites = hiddenDefaultSites.filter(d => d !== cleanDom);
+    }
+    if (hiddenDefaultSites.includes(cleanNoWww)) {
+        hiddenDefaultSites = hiddenDefaultSites.filter(d => d !== cleanNoWww);
     }
     window.hiddenDefaultSites = hiddenDefaultSites;
     await sLocal({ siteCategories: siteCategories, hiddenDefaultSites: hiddenDefaultSites });
@@ -1002,6 +1006,7 @@ async function tagSite(e, t) {
         domain: cleanDom,
         category: t
     });
+    await msg("TRIGGER_DNR_UPDATE");
     renderCategories();
 }
 
@@ -1269,24 +1274,40 @@ function renderCategories() {
                 await tagSite(dom, newCat);
             }), i.querySelectorAll(".rm-cat").forEach(el => el.addEventListener("click", async () => {
                 const dom = el.getAttribute("data-domain");
+                const cleanDom = sanitizeDomain(dom);
+                const noWww = cleanDom.replace(/^www\./, "");
                 delete siteCategories[dom];
+                delete siteCategories[cleanDom];
+                delete siteCategories[noWww];
+                delete siteCategories["www." + noWww];
                 const isDefault = (d) => {
+                    if (!d) return false;
                     if (AUTO_CATEGORIES[d]) return true;
                     const parts = d.split(".");
-                    for (let i = 1; i < parts.length - 1; i++) {
-                        if (AUTO_CATEGORIES[parts.slice(i).join(".")]) return true;
+                    for (let idx = 1; idx < parts.length - 1; idx++) {
+                        if (AUTO_CATEGORIES[parts.slice(idx).join(".")]) return true;
                     }
                     return false;
                 };
-                if (isDefault(dom)) {
-                    if (!hiddenDefaultSites.includes(dom)) {
+                if (isDefault(cleanDom) || isDefault(noWww) || isDefault(dom)) {
+                    if (!hiddenDefaultSites.includes(cleanDom)) {
+                        hiddenDefaultSites.push(cleanDom);
+                    }
+                    if (!hiddenDefaultSites.includes(noWww)) {
+                        hiddenDefaultSites.push(noWww);
+                    }
+                    if (dom && !hiddenDefaultSites.includes(dom)) {
                         hiddenDefaultSites.push(dom);
                     }
                 }
+                window.siteCategories = siteCategories;
+                window.siteCats = siteCategories;
+                window.hiddenDefaultSites = hiddenDefaultSites;
                 await sLocal({
                     siteCategories: siteCategories,
                     hiddenDefaultSites: hiddenDefaultSites
                 });
+                await msg("TRIGGER_DNR_UPDATE");
                 renderCategories();
             })), i.querySelectorAll(".cat-rule-btn").forEach(e => e.addEventListener("click", () => {
                 if (window.openAddOrEditModal) {
@@ -4453,7 +4474,7 @@ $("btn-pin") && $("btn-pin").addEventListener("click", async () => {
     else if (e !== t) toast(t_("pinsDoNotMatch"), "er");
     else {
         var a = (await gSync(["settings"])).settings || {};
-        a.passcodeHash = await sha256Hex(e), a.passcodeEnabled = !0, await sSync({
+        a.passcodeHash = await hashPin(e), a.passcodeEnabled = !0, await sSync({
             settings: a
         }), $("pin1").value = "", $("pin2").value = "", toast(t_("pinSavedActive"), "ok"), loadExtendedSettings()
     }

@@ -1276,39 +1276,32 @@ function renderCategories() {
                 const dom = el.getAttribute("data-domain");
                 const cleanDom = sanitizeDomain(dom);
                 const noWww = cleanDom.replace(/^www\./, "");
-                delete siteCategories[dom];
-                delete siteCategories[cleanDom];
-                delete siteCategories[noWww];
-                delete siteCategories["www." + noWww];
-                const isDefault = (d) => {
-                    if (!d) return false;
-                    if (AUTO_CATEGORIES[d]) return true;
-                    const parts = d.split(".");
-                    for (let idx = 1; idx < parts.length - 1; idx++) {
-                        if (AUTO_CATEGORIES[parts.slice(idx).join(".")]) return true;
-                    }
-                    return false;
-                };
-                if (isDefault(cleanDom) || isDefault(noWww) || isDefault(dom)) {
+                
+                if (a !== "uncategorized") {
+                    await tagSite(cleanDom, "uncategorized");
+                    toast(t_("movedToUncategorized") || "Moved to Uncategorized", "ok");
+                } else {
+                    delete siteCategories[dom];
+                    delete siteCategories[cleanDom];
+                    delete siteCategories[noWww];
+                    delete siteCategories["www." + noWww];
                     if (!hiddenDefaultSites.includes(cleanDom)) {
                         hiddenDefaultSites.push(cleanDom);
                     }
                     if (!hiddenDefaultSites.includes(noWww)) {
                         hiddenDefaultSites.push(noWww);
                     }
-                    if (dom && !hiddenDefaultSites.includes(dom)) {
-                        hiddenDefaultSites.push(dom);
-                    }
+                    window.siteCategories = siteCategories;
+                    window.siteCats = siteCategories;
+                    window.hiddenDefaultSites = hiddenDefaultSites;
+                    await sLocal({
+                        siteCategories: siteCategories,
+                        hiddenDefaultSites: hiddenDefaultSites
+                    });
+                    await msg("TRIGGER_DNR_UPDATE");
+                    renderCategories();
+                    toast(t_("siteRemoved") || "Site removed", "ok");
                 }
-                window.siteCategories = siteCategories;
-                window.siteCats = siteCategories;
-                window.hiddenDefaultSites = hiddenDefaultSites;
-                await sLocal({
-                    siteCategories: siteCategories,
-                    hiddenDefaultSites: hiddenDefaultSites
-                });
-                await msg("TRIGGER_DNR_UPDATE");
-                renderCategories();
             })), i.querySelectorAll(".cat-rule-btn").forEach(e => e.addEventListener("click", () => {
                 if (window.openAddOrEditModal) {
                     window.openAddOrEditModal(e.getAttribute("data-domain"));
@@ -4500,9 +4493,18 @@ $("btn-pin") && $("btn-pin").addEventListener("click", async () => {
         }), await msg("TRIGGER_DNR_UPDATE"), renderCombined(), updateDangerCounts(), toast(t_("rulesCleared"), "ok")
     }
 }), $("btn-clr-cats") && $("btn-clr-cats").addEventListener("click", async () => {
-    if (await promptPinIfEnabled("lockDanger") && await showConfirm(t_("clearCategories"), t_("clearCategoriesConfirm"), { isDestructive: true, confirmText: t_("clearConfirmBtn") })) {
-        await sLocal({ customCategories: {} });
-        siteCats = {}, renderCategories(), loadAnalytics(), updateDangerCounts(), toast(t_("categoriesCleared"), "ok")
+    if (await promptPinIfEnabled("lockDanger") && await showConfirm(t_("clearCategories") || "Reset Categories", t_("clearCategoriesConfirm") || "Are you sure you want to reset all custom categories to default assumptions?", { isDestructive: true, confirmText: t_("clearConfirmBtn") || "Reset" })) {
+        siteCategories = {};
+        hiddenDefaultSites = [];
+        window.siteCategories = siteCategories;
+        window.siteCats = siteCategories;
+        window.hiddenDefaultSites = hiddenDefaultSites;
+        await sLocal({ siteCategories: {}, hiddenDefaultSites: [] });
+        await msg("TRIGGER_DNR_UPDATE");
+        renderCategories();
+        loadAnalytics();
+        updateDangerCounts();
+        toast(t_("categoriesCleared") || "Categories reset to defaults", "ok");
     }
 }), $("btn-clr-focus") && $("btn-clr-focus").addEventListener("click", async () => {
     if (await promptPinIfEnabled("lockDanger") && await showConfirm(t_("clearFocusHistory"), t_("clearFocusConfirm"), { isDestructive: true, confirmText: t_("clearConfirmBtn") })) {

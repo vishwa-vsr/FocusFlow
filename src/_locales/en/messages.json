@@ -1404,13 +1404,13 @@
     "message": "Clear Rules"
   },
   "clearAllCategories": {
-    "message": "Clear all manual categories"
+    "message": "Reset Website Categories"
   },
   "clearAllCategoriesDesc": {
-    "message": "Reset all custom website category tags back to default."
+    "message": "Restore all website categories back to Flow's original starter setup."
   },
   "btnClearCategories": {
-    "message": "Clear Categories"
+    "message": "Reset to Defaults"
   },
   "supportFeedbackHeader": {
     "message": "Support & Feedback"
@@ -1806,15 +1806,15 @@
     "description": "Toast notice."
   },
   "clearCategories": {
-    "message": "Clear Categories",
+    "message": "Reset Website Categories",
     "description": "Confirm title."
   },
   "clearCategoriesConfirm": {
-    "message": "Remove all custom categories?",
+    "message": "Restore all website categories back to Flow's original starter setup?",
     "description": "Confirm body."
   },
   "categoriesCleared": {
-    "message": "Categories cleared",
+    "message": "Categories reset to defaults",
     "description": "Toast notice."
   },
   "clearHistoryConfirm": {

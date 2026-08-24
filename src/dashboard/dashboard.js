@@ -4086,7 +4086,7 @@ async function updateDangerCounts() {
         const customCats = locRes && locRes.siteCategories ? locRes.siteCategories : {};
         const catKeys = Object.keys(customCats).filter(k => !k.startsWith("www."));
         if ($("danger-count-cats")) {
-            $("danger-count-cats").textContent = catKeys.length === 1 ? "1 custom tag" : `${catKeys.length} custom tags`;
+            $("danger-count-cats").textContent = catKeys.length === 1 ? "1 modified site" : `${catKeys.length} modified sites`;
         }
     } catch (e) {
         console.warn("Failed to update danger counts:", e);

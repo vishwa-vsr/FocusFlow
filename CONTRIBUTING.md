@@ -102,17 +102,30 @@ User Interaction (Toolbar / Web Page)
 
 1. **Local-First & Zero Telemetry:** Never add external network calls, tracking scripts, or cloud dependencies. All state must remain on the client.
 2. **Minimal Dependencies:** Standard Web APIs are preferred over third-party npm packages.
-3. **Use the Central Icon Engine (`FlowIcons`):** Do not write inline `<svg>` elements inside HTML files or JS template literals. Use `<span data-icon="iconName"></span>` in HTML or `FlowIcons.get("iconName")` in JavaScript modules via `src/lib/icons.js`.
-4. **Locale Validation:** Any added translation key must exist in `src/_locales/en/messages.json` and follow Chrome's `$placeholder$` schema requirements. Running `npm run build` will verify this automatically.
+3. **No Full-File Auto-Formatting:** Avoid running global "Format Document" (Prettier / VS Code formatters) across existing files. Only format the specific lines you changed. Large reformatting diffs make code review difficult.
+4. **Visual Context for UI Changes:** If your PR changes the popup (`src/popup/`), dashboard (`src/dashboard/`), or blocked page (`src/blocked/`), **attach a screenshot or GIF** of the UI in action.
+5. **Use the Central Icon Engine (`FlowIcons`):** Do not write inline `<svg>` elements inside HTML files or JS template literals. Use `<span data-icon="iconName"></span>` in HTML or `FlowIcons.get("iconName")` in JavaScript modules via `src/lib/icons.js`.
+6. **Locale Validation:** Any added translation key must exist in `src/_locales/en/messages.json` and follow Chrome's `$placeholder$` schema requirements. Running `npm run build` will verify this automatically.
+
+---
+
+## 🌐 Supported Browsers Matrix
+
+Please test your changes on at least one browser engine before submitting a pull request:
+
+| Engine | Target Browsers | Loading Method |
+| :--- | :--- | :--- |
+| **Chromium** | Google Chrome, Microsoft Edge, Brave, Opera, Vivaldi | `chrome://extensions` → Load unpacked → `src/` |
+| **Gecko** | Mozilla Firefox, Zen Browser, Floorp | `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → `src/manifest.json` |
 
 ---
 
 ## 📋 Pull Request Checklist
 
 Before submitting a Pull Request, please ensure:
-- [ ] Your code has been tested in Developer Mode on at least one supported browser.
-- [ ] The build script passes with 0 errors: `npm run build -- --yes`.
-- [ ] All new UI strings are added to `src/_locales/en/messages.json`.
-- [ ] No third-party tracking or external server requests were introduced.
-- [ ] Code changes follow existing project style and architecture.
+- [ ] **Tested Locally:** Tested in Developer Mode on at least one Chromium or Firefox browser.
+- [ ] **Build & Linter Passes:** `npm run build -- --yes` compiles with 0 errors (all 3 i18n checks pass).
+- [ ] **No Full-File Reformatting:** Git diff only includes the relevant logic/style changes.
+- [ ] **Visual Proof Attached:** Screenshots or GIFs included in the PR description for any UI modifications.
+- [ ] **Zero Telemetry / Local-First:** Verified that no external server requests or tracking mechanisms were introduced.
 

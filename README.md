@@ -16,15 +16,21 @@
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square" alt="License"></a>
   </p>
 
-  <p>
-    <a href="https://vishwa-vsr.github.io/flow-website/">🌐 Website</a> • 
-    <a href="CHANGELOG.md">📄 Changelog</a> • 
-    <a href="CONTRIBUTING.md">🤝 Contributing</a> • 
-    <a href="PRIVACY.md">🔒 Privacy Policy</a>
+  <p align="center">
+    <a href="#-overview">Overview</a> •
+    <a href="#-key-features">Key Features</a> •
+    <a href="#-comparison-with-alternatives">Comparison</a> •
+    <a href="#-screenshots">Screenshots</a> •
+    <a href="#-store-downloads">Store Downloads</a> •
+    <a href="#️-manual-installation-developer-mode">Manual Install</a> •
+    <a href="#-built-with--tech-stack">Tech Stack</a> •
+    <a href="#-frequently-asked-questions">FAQ</a>
   </p>
 
   <br>
   <img src="media/flow_preview6.jpg" width="100%" alt="Flow Overview Banner" style="border-radius: 10px;">
+  <br><br>
+  <p>🌐 <b>Try the live website & interactive preview:</b> <a href="https://vishwa-vsr.github.io/flow-website/"><b>https://vishwa-vsr.github.io/flow-website/</b></a></p>
 </div>
 
 ---
@@ -102,6 +108,12 @@ Flow is a free, local-first browser extension designed to help you stay focused,
 
 ## 🛠️ Manual Installation (Developer Mode)
 
+You can clone the repository with Git, or download the latest source code as a ZIP:
+
+<p>
+  <a href="https://github.com/vishwa-vsr/Flow/archive/refs/heads/main.zip"><img src="https://img.shields.io/badge/Download-Latest_Source_ZIP-blue.svg?style=flat-square" alt="Download Source ZIP"></a>
+</p>
+
 ### Chrome / Brave / Edge / Chromium:
 1. Clone or download this repository.
 2. Navigate to `chrome://extensions` (or `edge://extensions` in Microsoft Edge).
@@ -138,6 +150,19 @@ npm run zip
 > ```powershell
 > node tools/build.js --yes
 > ```
+
+---
+
+## 🛠️ Built With / Tech Stack
+
+Flow is built with a zero-bloat, client-side philosophy:
+
+* **Frontend & Logic:** Vanilla JavaScript (ES2022) with native DOM APIs.
+* **Extension Standard:** WebExtensions API (Manifest V3) using `declarativeNetRequest`, `alarms`, `idle`, and `storage`.
+* **Data Visualization:** [Chart.js 4.5](https://www.chartjs.org/) (bundled locally, zero external CDN requests).
+* **Storage Engine:** `chrome.storage.local` for settings and rules + **IndexedDB** for high-volume daily historical metrics.
+* **Styling & Tokens:** Pure CSS variables with custom design tokens, responsive cards, and OLED Dark Mode.
+* **Build Compiler:** Lightweight Node.js build pipeline powered by `esbuild` and an automatic 3-stage i18n parity validator.
 
 ---
 

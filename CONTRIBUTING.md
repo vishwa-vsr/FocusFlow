@@ -34,7 +34,7 @@ Flow supports 11 locales located in `src/_locales/`. If you are a native speaker
 1. Fork and clone the repository:
    ```bash
    git clone https://github.com/<your-username>/Flow.git
-   cd Flow/flow-source
+   cd Flow
    ```
 2. Install dependencies:
    ```bash
@@ -90,10 +90,12 @@ User Interaction (Toolbar / Web Page)
         │
         └── lib/ (src/lib/)
               ├── constants.js — Shared constants, default categories, and CSS tweak maps.
-              ├── db.js        — IndexedDB storage wrapper for long-term daily analytics.
-              ├── storage.js   — chrome.storage.local helper functions.
-              ├── icons.js     — Universal SVG icon renderer (FlowIcons).
-              └── i18n.js      — Localization helper.
+              ├── db.js        — IndexedDB wrapper for long-term daily analytics (FocusFlowDB).
+              ├── storage.js   — chrome.storage helpers (local, sync, session) with in-memory cache.
+              ├── icons.js     — FlowIcons SVG icon engine (44 icons, auto-renders data-icon attributes).
+              ├── i18n.js      — Localization helper and dynamic language switching.
+              ├── utils.js     — Shared utility functions.
+              └── chart.min.js — Bundled Chart.js 4.5 (local, zero CDN).
 ```
 
 ---
@@ -124,8 +126,7 @@ Please test your changes on at least one browser engine before submitting a pull
 
 Before submitting a Pull Request, please ensure:
 - [ ] **Tested Locally:** Tested in Developer Mode on at least one Chromium or Firefox browser.
-- [ ] **Build & Linter Passes:** `npm run build -- --yes` compiles with 0 errors (all 3 i18n checks pass).
+- [ ] **Build & Linter Passes:** `npm run build -- --yes` compiles with 0 errors (all i18n checks pass).
 - [ ] **No Full-File Reformatting:** Git diff only includes the relevant logic/style changes.
 - [ ] **Visual Proof Attached:** Screenshots or GIFs included in the PR description for any UI modifications.
 - [ ] **Zero Telemetry / Local-First:** Verified that no external server requests or tracking mechanisms were introduced.
-

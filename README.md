@@ -10,9 +10,11 @@
   </p>
 
   <p>
+    <a href="https://github.com/vishwa-vsr/Flow/actions"><img src="https://img.shields.io/github/actions/workflow/status/vishwa-vsr/Flow/build.yml?branch=main&style=flat-square&color=success" alt="Build Status"></a>
+    <a href="https://github.com/vishwa-vsr/Flow"><img src="https://img.shields.io/codefactor/grade/github/vishwa-vsr/Flow?style=flat-square&color=blue" alt="Code Quality"></a>
+    <a href="https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp"><img src="https://img.shields.io/chrome-web-store/users/heinimoclnopjnkpicmonhgichbjejcp?style=flat-square&color=blue&label=users" alt="Active Users"></a>
     <a href="https://github.com/vishwa-vsr/Flow/stargazers"><img src="https://img.shields.io/github/stars/vishwa-vsr/Flow?style=flat-square&color=yellow" alt="GitHub Stars"></a>
     <a href="https://github.com/vishwa-vsr/Flow/issues"><img src="https://img.shields.io/github/issues/vishwa-vsr/Flow?style=flat-square&color=blue" alt="Open Issues"></a>
-    <a href="https://github.com/vishwa-vsr/Flow/releases"><img src="https://img.shields.io/github/v/release/vishwa-vsr/Flow?style=flat-square&color=green" alt="Latest Release"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square" alt="License"></a>
   </p>
 
@@ -101,11 +103,11 @@ Flow is a free, local-first browser extension that blocks distracting websites, 
 
 ## 📥 Store Downloads
 
-| Store | Release | User Rating |
-| :--- | :---: | :---: |
-| **[Chrome Web Store](https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp)** | [![](https://img.shields.io/chrome-web-store/v/heinimoclnopjnkpicmonhgichbjejcp?style=flat-square&color=blue)](https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp) | [![](https://img.shields.io/chrome-web-store/rating/heinimoclnopjnkpicmonhgichbjejcp?style=flat-square&color=blue)](https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp) |
-| **[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/jlcdkibfogehgkbhkkkglifbanenkmic)** | [![](https://img.shields.io/badge/dynamic/json?label=edge&prefix=v&query=%24.version&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fgetproductdetailsbycrxid%2Fjlcdkibfogehgkbhkkkglifbanenkmic&style=flat-square&color=blue)](https://microsoftedge.microsoft.com/addons/detail/jlcdkibfogehgkbhkkkglifbanenkmic) | [![](https://img.shields.io/badge/dynamic/json?label=rating&suffix=/5&query=%24.averageRating&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fgetproductdetailsbycrxid%2Fjlcdkibfogehgkbhkkkglifbanenkmic&style=flat-square&color=blue)](https://microsoftedge.microsoft.com/addons/detail/jlcdkibfogehgkbhkkkglifbanenkmic) |
-| **[Firefox Add-ons (AMO)](https://addons.mozilla.org/en-US/firefox/addon/flow-website-blocker/)** | [![](https://img.shields.io/amo/v/flow-website-blocker?style=flat-square&color=orange)](https://addons.mozilla.org/en-US/firefox/addon/flow-website-blocker/) | [![](https://img.shields.io/amo/rating/flow-website-blocker?style=flat-square&color=orange)](https://addons.mozilla.org/en-US/firefox/addon/flow-website-blocker/) |
+| Store | Release | User Rating | Active Users |
+| :--- | :---: | :---: | :---: |
+| **[Chrome Web Store](https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp)** | [![](https://img.shields.io/chrome-web-store/v/heinimoclnopjnkpicmonhgichbjejcp?style=flat-square&color=blue)](https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp) | [![](https://img.shields.io/chrome-web-store/rating/heinimoclnopjnkpicmonhgichbjejcp?style=flat-square&color=blue)](https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp) | [![](https://img.shields.io/chrome-web-store/users/heinimoclnopjnkpicmonhgichbjejcp?style=flat-square&color=blue)](https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp) |
+| **[Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/jlcdkibfogehgkbhkkkglifbanenkmic)** | [![](https://img.shields.io/badge/dynamic/json?label=edge&prefix=v&query=%24.version&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fgetproductdetailsbycrxid%2Fjlcdkibfogehgkbhkkkglifbanenkmic&style=flat-square&color=blue)](https://microsoftedge.microsoft.com/addons/detail/jlcdkibfogehgkbhkkkglifbanenkmic) | [![](https://img.shields.io/badge/dynamic/json?label=rating&suffix=/5&query=%24.averageRating&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fgetproductdetailsbycrxid%2Fjlcdkibfogehgkbhkkkglifbanenkmic&style=flat-square&color=blue)](https://microsoftedge.microsoft.com/addons/detail/jlcdkibfogehgkbhkkkglifbanenkmic) | [![](https://img.shields.io/badge/dynamic/json?label=users&query=%24.activeInstallCount&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fgetproductdetailsbycrxid%2Fjlcdkibfogehgkbhkkkglifbanenkmic&style=flat-square&color=blue)](https://microsoftedge.microsoft.com/addons/detail/jlcdkibfogehgkbhkkkglifbanenkmic) |
+| **[Firefox Add-ons (AMO)](https://addons.mozilla.org/en-US/firefox/addon/flow-website-blocker/)** | [![](https://img.shields.io/amo/v/flow-website-blocker?style=flat-square&color=orange)](https://addons.mozilla.org/en-US/firefox/addon/flow-website-blocker/) | [![](https://img.shields.io/amo/rating/flow-website-blocker?style=flat-square&color=orange)](https://addons.mozilla.org/en-US/firefox/addon/flow-website-blocker/) | [![](https://img.shields.io/amo/users/flow-website-blocker?style=flat-square&color=orange)](https://addons.mozilla.org/en-US/firefox/addon/flow-website-blocker/) |
 
 ---
 

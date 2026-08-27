@@ -46,68 +46,77 @@ Flow supports 11 locales located in `src/_locales/`. If you are a native speaker
 
 ---
 
-## 🛠️ Build Commands
+## 🏗️ Architecture Overview
+
+Flow is built on **Manifest V3**. The data flow and component boundaries are structured as follows:
+
+```mermaid
+graph TD
+    User([User Interaction]) --> Popup[popup/<br/>Toolbar UI]
+    User --> Page[Web Page]
+    
+    Page --> Content[content/<br/>site-tracker.js]
+    Content -- "Visibility Heartbeats &<br/>Distraction Hiding" --> Background[background/<br/>service-worker.js]
+    
+    Popup -- "Start Timer / Toggles" --> Background
+    Popup -- "Read/Write" --> Storage[(lib/storage.js)]
+    
+    Background -- "Rules Update" --> DNR{Declarative Net Request}
+    DNR -- "Redirects to" --> Blocked[blocked/<br/>index.html]
+    
+    Dashboard[dashboard/<br/>Settings & Heatmap] -- "Analytics & Config" --> Storage
+    Dashboard -- "History Data" --> DB[(lib/db.js)]
+    Background -- "Save Sessions" --> DB
+```
+
+* **`src/lib/constants.js`** — Shared constants, default categories, and CSS tweak maps.
+* **`src/lib/db.js`** — IndexedDB wrapper for long-term daily analytics (`FocusFlowDB`).
+* **`src/lib/storage.js`** — `chrome.storage` helpers (local, sync, session) with in-memory cache.
+* **`src/lib/icons.js`** — FlowIcons SVG icon engine (auto-renders `data-icon` attributes).
+* **`src/lib/i18n.js`** — Localization helper and dynamic language switching.
+* **`src/lib/chart.min.js`** — Bundled Chart.js 4.5 (local, zero CDN).
+
+---
+
+## 📐 Development Guidelines
+
+### 1. Conventional Commits
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) standard. This helps auto-generate changelogs and keeps the history clean. Please prefix your commits:
+* `feat:` for new features (e.g., `feat: add custom timer preset`)
+* `fix:` for bug fixes (e.g., `fix: reset cooldown overlay on click`)
+* `docs:` for documentation changes
+* `style:` for formatting, missing semi-colons, etc.
+* `refactor:` for code changes that neither fix a bug nor add a feature
+
+### 2. General Rules
+1. **Local-First & Zero Telemetry:** Never add external network calls, tracking scripts, or cloud dependencies. All state must remain on the client.
+2. **Minimal Dependencies:** Standard Web APIs are preferred over third-party npm packages.
+3. **No Full-File Auto-Formatting:** Avoid running global "Format Document" (Prettier / VS Code formatters) across existing files. Only format the specific lines you changed. Large reformatting diffs make code review difficult.
+4. **Visual Context for UI Changes:** If your PR changes the popup, dashboard, or blocked page, **attach a screenshot or GIF** of the UI in action.
+5. **Use the Central Icon Engine (`FlowIcons`):** Do not write inline `<svg>` elements. Use `<span data-icon="iconName"></span>` in HTML or `FlowIcons.get("iconName")` in JS via `src/lib/icons.js`.
+6. **Locale Validation:** Any added translation key must exist in `src/_locales/en/messages.json` and follow Chrome's `$placeholder$` schema requirements. Running `npm run build` will verify this automatically.
+
+---
+
+## 🛠️ Build Commands & Release Process
 
 All build tooling is defined in `package.json` and runs via Node.js:
 
 | Command | Description |
 | :--- | :--- |
 | `npm run build` | Validates i18n parity, minifies JavaScript/CSS with `esbuild`, adjusts Firefox manifests, and outputs to `dist/chrome/`, `dist/edge/`, and `dist/firefox/`. |
-| `npm run zip` | Runs the build and generates store-ready archives in `release/` (`flow-dist-v*.zip`, `flow-edge-v*.zip`, `flow-firefox-v*.zip`, `flow-source-v*.zip`). |
-| `npm run bundle-chart` | Rebundles `Chart.js` into `src/lib/chart.min.js` targeting Chrome 90+ standards. |
+| `npm run zip` | Runs the build and generates store-ready archives in `release/`. |
+| `npm run bundle-chart` | Rebundles `Chart.js` into `src/lib/chart.min.js`. |
 
-> **Skip Prompt Flag:** To run the build without interactive CLI prompts, use:
-> ```bash
-> npm run build -- --yes
-> ```
+> **Skip Prompt Flag:** To run the build without interactive CLI prompts, use `npm run build -- --yes`.
 
----
-
-## 🏗️ Architecture Overview
-
-Flow is built on **Manifest V3**. Data flow and component boundaries are structured as follows:
-
-```text
-User Interaction (Toolbar / Web Page)
-        │
-        ├── popup/ (src/popup/)
-        │     └── Toolbar UI: starts Pomodoro timers, switches presets, toggles quick rules.
-        │
-        ├── content/ (src/content/site-tracker.js)
-        │     └── Injected into web pages: tracks active visibility heartbeats, displays
-        │         cool-down/nudge overlays, and hides distracting elements (Shorts, Reels, etc.).
-        │
-        ├── background/ (src/background/service-worker.js)
-        │     └── Background service worker: aggregates tab time, manages alarms,
-        │         handles idle state detection, and updates dynamic declarativeNetRequest rules.
-        │
-        ├── dashboard/ (src/dashboard/)
-        │     └── Full-page options dashboard: analytics charts, 365-day heatmap, PIN security,
-        │         blocking rule editor, and data migration.
-        │
-        ├── blocked/ (src/blocked/)
-        │     └── Local HTML overlay displayed when a blocked domain is accessed.
-        │
-        └── lib/ (src/lib/)
-              ├── constants.js — Shared constants, default categories, and CSS tweak maps.
-              ├── db.js        — IndexedDB wrapper for long-term daily analytics (FocusFlowDB).
-              ├── storage.js   — chrome.storage helpers (local, sync, session) with in-memory cache.
-              ├── icons.js     — FlowIcons SVG icon engine (44 icons, auto-renders data-icon attributes).
-              ├── i18n.js      — Localization helper and dynamic language switching.
-              ├── utils.js     — Shared utility functions.
-              └── chart.min.js — Bundled Chart.js 4.5 (local, zero CDN).
-```
-
----
-
-## 📐 Development Guidelines
-
-1. **Local-First & Zero Telemetry:** Never add external network calls, tracking scripts, or cloud dependencies. All state must remain on the client.
-2. **Minimal Dependencies:** Standard Web APIs are preferred over third-party npm packages.
-3. **No Full-File Auto-Formatting:** Avoid running global "Format Document" (Prettier / VS Code formatters) across existing files. Only format the specific lines you changed. Large reformatting diffs make code review difficult.
-4. **Visual Context for UI Changes:** If your PR changes the popup (`src/popup/`), dashboard (`src/dashboard/`), or blocked page (`src/blocked/`), **attach a screenshot or GIF** of the UI in action.
-5. **Use the Central Icon Engine (`FlowIcons`):** Do not write inline `<svg>` elements inside HTML files or JS template literals. Use `<span data-icon="iconName"></span>` in HTML or `FlowIcons.get("iconName")` in JavaScript modules via `src/lib/icons.js`.
-6. **Locale Validation:** Any added translation key must exist in `src/_locales/en/messages.json` and follow Chrome's `$placeholder$` schema requirements. Running `npm run build` will verify this automatically.
+### Release Process (For Maintainers)
+Flow follows Semantic Versioning (SemVer). To cut a new release:
+1. Update the version number in `src/manifest.json`.
+2. Document the changes in `CHANGELOG.md` under a new version heading.
+3. Commit with `chore: release vX.Y.Z`.
+4. Run `npm run zip` to generate the `.zip` packages for the Chrome Web Store, Edge Add-ons, and Mozilla AMO.
+5. Upload the zips and create a GitHub Release with the source code.
 
 ---
 
@@ -127,6 +136,7 @@ Please test your changes on at least one browser engine before submitting a pull
 Before submitting a Pull Request, please ensure:
 - [ ] **Tested Locally:** Tested in Developer Mode on at least one Chromium or Firefox browser.
 - [ ] **Build & Linter Passes:** `npm run build -- --yes` compiles with 0 errors (all i18n checks pass).
+- [ ] **Commit Messages:** Follow the `feat:`, `fix:`, `docs:` convention.
 - [ ] **No Full-File Reformatting:** Git diff only includes the relevant logic/style changes.
 - [ ] **Visual Proof Attached:** Screenshots or GIFs included in the PR description for any UI modifications.
 - [ ] **Zero Telemetry / Local-First:** Verified that no external server requests or tracking mechanisms were introduced.

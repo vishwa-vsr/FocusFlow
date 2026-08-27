@@ -52,21 +52,23 @@ Flow is built on **Manifest V3**. The data flow and component boundaries are str
 
 ```mermaid
 graph TD
-    User([User Interaction]) --> Popup[popup/<br/>Toolbar UI]
-    User --> Page[Web Page]
-    
+    User([User Interaction]) --> Page[Web Page]
+    User --> Popup[popup/<br/>Toolbar UI]
+    User --> Dashboard[dashboard/<br/>Settings & Heatmap]
+
     Page --> Content[content/<br/>site-tracker.js]
-    Content -- "Visibility Heartbeats &<br/>Distraction Hiding" --> Background[background/<br/>service-worker.js]
     
-    Popup -- "Start Timer / Toggles" --> Background
-    Popup -- "Read/Write" --> Storage[(lib/storage.js)]
+    Content -- "Heartbeats & Hiding" --> Background[background/<br/>service-worker.js]
+    Popup -- "Start Timer & Toggles" --> Background
     
-    Background -- "Rules Update" --> DNR{Declarative Net Request}
+    Background -- "Update Rules" --> DNR{Declarative Net<br/>Request}
     DNR -- "Redirects to" --> Blocked[blocked/<br/>index.html]
     
-    Dashboard[dashboard/<br/>Settings & Heatmap] -- "Analytics & Config" --> Storage
-    Dashboard -- "History Data" --> DB[(lib/db.js)]
-    Background -- "Save Sessions" --> DB
+    Popup -. "Settings" .-> Storage[(lib/storage.js)]
+    Dashboard -. "Config" .-> Storage
+    
+    Background -. "Save Sessions" .-> DB[(lib/db.js)]
+    Dashboard -. "Load History" .-> DB
 ```
 
 * **`src/lib/constants.js`** — Shared constants, default categories, and CSS tweak maps.

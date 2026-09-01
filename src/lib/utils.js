@@ -28,23 +28,30 @@ function sanitizeDomain(d) {
     return String(d).toLowerCase().trim().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0].replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+const _htmlTemplate = (typeof document !== "undefined") ? document.createElement("template") : null;
+
 function setSafeHTML(el, html) {
     if (!el) return;
-    const isSVG = el.namespaceURI === "http://www.w3.org/2000/svg" || el.tagName.toLowerCase() === "svg";
     el.textContent = "";
-    if (isSVG) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${html}</svg>`, "image/svg+xml");
-        const rootSvg = doc.documentElement;
-        while (rootSvg.firstChild) {
-            el.appendChild(rootSvg.firstChild);
+    
+    // Fast path: standard HTML elements using native template cloning
+    if (el.namespaceURI !== "http://www.w3.org/2000/svg" && el.tagName.toLowerCase() !== "svg") {
+        if (_htmlTemplate) {
+            _htmlTemplate.innerHTML = html;
+            el.appendChild(_htmlTemplate.content.cloneNode(true));
+            return;
         }
-    } else {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        while (doc.body.firstChild) {
-            el.appendChild(doc.body.firstChild);
-        }
+    }
+
+    // Isolated path for SVG elements requiring SVG XML namespace
+    const isSVG = el.namespaceURI === "http://www.w3.org/2000/svg" || el.tagName.toLowerCase() === "svg";
+    const parser = new DOMParser();
+    const doc = isSVG 
+        ? parser.parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${html}</svg>`, "image/svg+xml")
+        : parser.parseFromString(html, "text/html");
+    const container = isSVG ? doc.documentElement : doc.body;
+    while (container && container.firstChild) {
+        el.appendChild(container.firstChild);
     }
 }
 

@@ -21,21 +21,6 @@
   if (window.__ffCooldownActive) return;
   window.__ffCooldownActive = true;
 
-// FF v6.18: Immediately notify the SW when the browser is minimized/restored.
-// Must be registered BEFORE the early bailout so it works on every tracked page.
-  const _sendVisibility = (state) => {
-    try {
-      if (chrome?.runtime?.id) {
-        chrome.runtime.sendMessage({ type: state === "visible" ? "TRACKING_VISIBILITY_VISIBLE" : "TRACKING_VISIBILITY_HIDDEN", domain: host }).catch(() => {});
-      }
-    } catch (_) {}
-  };
-  document.addEventListener("visibilitychange", () => {
-    _sendVisibility(document.visibilityState);
-  });
-  // Fire immediately to establish the correct visibility state on load.
-  _sendVisibility(document.visibilityState);
-
   // Fast check: is this current website actually tracked or governed by any rules?
   const fastCfg = await new Promise((res) =>
     chrome.storage.local.get(["ruleDomainsCache", "neverTrackDomains", "privacyModeActive", "allowList"], (r) => res(r || {}))
@@ -51,6 +36,20 @@
     window.__ffCooldownActive = false;
     return;
   }
+
+  // FF v6.18: Notify the SW when the browser is minimized/restored (only for active tracked pages).
+  const _sendVisibility = (state) => {
+    try {
+      if (chrome?.runtime?.id) {
+        chrome.runtime.sendMessage({ type: state === "visible" ? "TRACKING_VISIBILITY_VISIBLE" : "TRACKING_VISIBILITY_HIDDEN", domain: host }).catch(() => {});
+      }
+    } catch (_) {}
+  };
+  document.addEventListener("visibilitychange", () => {
+    _sendVisibility(document.visibilityState);
+  });
+  // Fire once to establish correct visibility state on load for this tracked page.
+  _sendVisibility(document.visibilityState);
 
   let hasRules = true;
   if (fastCfg.ruleDomainsCache !== undefined) {
@@ -553,16 +552,18 @@
       }
     }, 1000);
 
-    go.onclick = () => {
+    go.onclick = async () => {
       if (n > 0) return;
-      const updates = {
-        cooldownPassedAt: { ...passed, [host]: Date.now() },
-      };
       if (!chrome?.runtime?.id) {
         location.reload();
         return;
       }
       try {
+        const currentData = await new Promise((res) => chrome.storage.local.get(["cooldownPassedAt"], r => res(r || {})));
+        const latestPassed = currentData.cooldownPassedAt || {};
+        const updates = {
+          cooldownPassedAt: { ...latestPassed, [host]: Date.now() },
+        };
         chrome.storage.local.set(updates, () => {
           wrap.remove();
           let blockTarget = blockActive[matchedDomain];

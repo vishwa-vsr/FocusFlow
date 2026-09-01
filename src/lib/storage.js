@@ -47,7 +47,7 @@
   const _cachedSyncKeys = new Set();
   try {
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === "sync" && (changes.settings || changes.focusPresets)) {
+      if (area === "sync" && (changes.settings || changes.focusPresets || changes.customCategories)) {
         _syncCache = null;
         _cachedSyncKeys.clear();
       }

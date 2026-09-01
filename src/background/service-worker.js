@@ -2538,6 +2538,16 @@ async function handle(t, e) {
 
 
 async function restoreState() {
+    try {
+        if (chrome?.storage?.session) {
+            const sRes = await chrome.storage.session.get(["_injectedCSSTabs", "warnedSitesMemory", "_activeRedirects", "lastWarnDate"]);
+            if (sRes._injectedCSSTabs) _injectedCSSTabs = sRes._injectedCSSTabs;
+            if (sRes.warnedSitesMemory) warnedSitesMemory = sRes.warnedSitesMemory;
+            if (sRes._activeRedirects) _activeRedirects = sRes._activeRedirects;
+            if (sRes.lastWarnDate) lastWarnDate = sRes.lastWarnDate;
+        }
+    } catch (_) {}
+
     const t = await gLocal(["focusSession"]);
     if (t && t.focusSession) {
         focusState = {

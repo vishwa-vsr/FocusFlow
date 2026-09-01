@@ -1182,6 +1182,172 @@ html.light .ff-dropdown-settings .ff-dropdown-btn:hover {
   padding: 8px 12px;
 }
 
+/* Form / Modal Dropdown Variant - Perfectly matches .inp dimensions (46px height, 12px border radius, 12px 16px padding) */
+.ff-dropdown-form,
+.overlay .ff-dropdown-settings,
+.add-form-pane .ff-dropdown-settings {
+  width: 100% !important;
+  display: block !important;
+}
+
+.ff-dropdown-form .ff-dropdown-btn,
+.overlay .ff-dropdown-settings .ff-dropdown-btn,
+.add-form-pane .ff-dropdown-settings .ff-dropdown-btn {
+  width: 100% !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 12px 16px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  background: var(--bg3) !important;
+  border: 1px solid var(--bd2) !important;
+  color: var(--tx) !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  text-transform: none !important;
+}
+
+.ff-dropdown-form .ff-dropdown-btn:hover,
+.overlay .ff-dropdown-settings .ff-dropdown-btn:hover,
+.add-form-pane .ff-dropdown-settings .ff-dropdown-btn:hover {
+  border-color: var(--bd3) !important;
+  background: var(--bg4) !important;
+}
+
+.ff-dropdown-form.open .ff-dropdown-btn,
+.overlay .ff-dropdown-settings.open .ff-dropdown-btn,
+.add-form-pane .ff-dropdown-settings.open .ff-dropdown-btn {
+  border-color: var(--bd3) !important;
+  background: var(--bg4) !important;
+}
+
+/* Light theme modal / form dropdown styles */
+html.light .ff-dropdown-form .ff-dropdown-btn,
+html.light .overlay .ff-dropdown-settings .ff-dropdown-btn,
+html.light .add-form-pane .ff-dropdown-settings .ff-dropdown-btn {
+  background: #F4F4F5 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #0C0A09 !important;
+}
+
+html.light .ff-dropdown-form .ff-dropdown-btn:hover,
+html.light .overlay .ff-dropdown-settings .ff-dropdown-btn:hover,
+html.light .add-form-pane .ff-dropdown-settings .ff-dropdown-btn:hover,
+html.light .ff-dropdown-form.open .ff-dropdown-btn,
+html.light .overlay .ff-dropdown-settings.open .ff-dropdown-btn,
+html.light .add-form-pane .ff-dropdown-settings.open .ff-dropdown-btn {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+.ff-dropdown-form .ff-dropdown-menu,
+.overlay .ff-dropdown-settings .ff-dropdown-menu,
+.add-form-pane .ff-dropdown-settings .ff-dropdown-menu {
+  top: calc(100% + 6px) !important;
+  border-radius: 12px !important;
+}
+
+.ff-dropdown-form .ff-dropdown-item,
+.overlay .ff-dropdown-settings .ff-dropdown-item,
+.add-form-pane .ff-dropdown-settings .ff-dropdown-item {
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+/* Standardized PIN Access Control Status Badge & Buttons */
+#pin-status-badge,
+.pin-status-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--green-bd) !important;
+  background: var(--green-bg) !important;
+  color: var(--green) !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+#pin-status-badge.pin-not-set {
+  border-color: var(--bd) !important;
+  background: transparent !important;
+  color: var(--tx2) !important;
+}
+
+html.light #pin-status-badge {
+  background: var(--green-bg) !important;
+  color: var(--green) !important;
+  border-color: var(--green-bd) !important;
+}
+
+html.light #pin-status-badge.pin-not-set {
+  background: transparent !important;
+  color: var(--tx3) !important;
+  border-color: var(--bd2) !important;
+}
+
+#pin-manage-box #btn-change-pin,
+#pin-manage-box #btn-remove-pin,
+#pin-actions-div #btn-change-pin,
+#pin-actions-div #btn-remove-pin {
+  height: 34px !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+}
+
+/* Category Group Header Badges and Buttons */
+.cat-site-count-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 30px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--bd) !important;
+  color: var(--tx2) !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+html.light .cat-site-count-badge {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: var(--tx2) !important;
+}
+
+.cat-edit-btn {
+  height: 30px !important;
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+}
+
 .trow {
   position: relative;
 }

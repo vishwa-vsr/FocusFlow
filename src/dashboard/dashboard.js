@@ -1100,8 +1100,9 @@ function upgradeSelectToCustomDropdown(selectEl) {
     }
     selectEl.dataset.ffUpgraded = "true";
 
+    const isFormSelect = Boolean(selectEl.closest(".overlay") || selectEl.closest(".add-form-pane") || selectEl.closest(".cat-edit-modal") || selectEl.closest(".ff-modal-card") || selectEl.style.width === "100%" || selectEl.classList.contains("sel-form"));
     const wrapper = document.createElement("div");
-    wrapper.className = "ff-dropdown ff-dropdown-settings";
+    wrapper.className = isFormSelect ? "ff-dropdown ff-dropdown-settings ff-dropdown-form" : "ff-dropdown ff-dropdown-settings";
     if (selectEl.style.width) {
         wrapper.style.width = selectEl.style.width;
     }
@@ -1251,11 +1252,11 @@ function renderCategories() {
             <span style="font-size:18px; font-weight:800; color:var(--tx);">${catEmojiStr} ${catLabelStr}</span>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
-            <button class="bs bs-sm cat-edit-btn" data-cat="${a}" style="padding:6px 12px; font-size:12px;">
+            <button class="bs cat-edit-btn" data-cat="${a}">
               ${FlowIcons.get("edit", { size: 12, style: "vertical-align:middle; margin-right:4px;" })}
               ${t_("edit") || "Edit"}
             </button>
-            <span class="bs" style="background:transparent; border-color:var(--bd); color:var(--tx2); font-weight:700;">${totalCountStr}</span>
+            <span class="cat-site-count-badge">${totalCountStr}</span>
           </div>
         </div>
         <div class="cat-group-list"></div>
@@ -1673,25 +1674,22 @@ async function renderInsights() {
         tip.style.top = Math.max(8, ty) + "px";
     };
 
-    cellRects.forEach(hit => {
-        const cellTarget = document.createElement("div");
-        cellTarget._heatmapHit = hit;
-        cellTarget.style.cssText = [
-            "position:absolute",
-            "left:" + hit.x + "px",
-            "top:" + hit.y + "px",
-            "width:" + cell + "px",
-            "height:" + cell + "px",
-            "border-radius:6px",
-            "background:rgba(255,255,255,0)",
-            "cursor:crosshair"
-        ].join(";") + ";";
-        cellTarget.addEventListener("mouseenter", ev => showHeatmapTip(ev, hit));
-        cellTarget.addEventListener("mousemove", ev => showHeatmapTip(ev, hit));
-        cellTarget.addEventListener("mouseleave", hideHeatmapTip);
-        hoverLayer.appendChild(cellTarget);
-    });
-    hoverLayer.addEventListener("mouseleave", hideHeatmapTip);
+    hoverLayer.textContent = "";
+    hoverLayer.onmousemove = (ev) => {
+        const rect = hoverLayer.getBoundingClientRect();
+        const mouseX = ev.clientX - rect.left;
+        const mouseY = ev.clientY - rect.top;
+        const hit = cellRects.find(r => 
+            mouseX >= r.x && mouseX <= r.x + cell &&
+            mouseY >= r.y && mouseY <= r.y + cell
+        );
+        if (hit) {
+            showHeatmapTip(ev, hit);
+        } else {
+            hideHeatmapTip();
+        }
+    };
+    hoverLayer.onmouseleave = hideHeatmapTip;
     const legend = $("heatmap-legend");
     if (legend && !legend.dataset.wired) {
         legend.dataset.wired = "true";
@@ -2037,15 +2035,7 @@ document.querySelectorAll(".nav-links .ni").forEach(e => {
             ["overview", "daily", "topsites", "trend"].forEach(name => {
                 const tab = $("atab-" + name);
                 if (tab) {
-                    if (name === currentATab) {
-                        tab.style.display = "";
-                        tab.classList.remove("ff-tab-anim");
-                        void tab.offsetWidth;
-                        tab.classList.add("ff-tab-anim");
-                    } else {
-                        tab.style.display = "none";
-                        tab.classList.remove("ff-tab-anim");
-                    }
+                    tab.style.display = (name === currentATab) ? "" : "none";
                 }
             });
             loadAnalytics();
@@ -2239,6 +2229,71 @@ function attachChartWheelScroll(scrollEl) {
     }, { passive: false });
 }
 
+function renderYAxisLabels(yAxisId, maxVal, topPad, bottomPad, plotH, textColor) {
+    const yAxisEl = document.getElementById(yAxisId);
+    const rightYAxisId = yAxisId + "-right";
+    const yAxisElRight = document.getElementById(rightYAxisId);
+    
+    if (yAxisEl) {
+        yAxisEl.textContent = "";
+        yAxisEl.style.display = 'flex';
+        yAxisEl.style.position = "absolute";
+        yAxisEl.style.left = "0px";
+        yAxisEl.style.top = "0px";
+        yAxisEl.style.bottom = "35px";
+        yAxisEl.style.width = "50px";
+        yAxisEl.style.zIndex = "10";
+    }
+    if (yAxisElRight) {
+        yAxisElRight.textContent = "";
+        yAxisElRight.style.display = 'flex';
+        yAxisElRight.style.position = "absolute";
+        yAxisElRight.style.right = "0px";
+        yAxisElRight.style.top = "0px";
+        yAxisElRight.style.bottom = "35px";
+        yAxisElRight.style.width = "50px";
+        yAxisElRight.style.zIndex = "10";
+    }
+
+    const steps = 4;
+    for (let s = 0; s <= steps; s++) {
+        const val = (maxVal / steps) * s;
+        const yPos = (topPad + plotH) - (s / steps) * plotH;
+        const labelText = maxVal > 90 ? (val / 60).toFixed(1) + "h" : Math.round(val) + "m";
+        
+        if (yAxisEl) {
+            const lbl = document.createElement("div");
+            lbl.textContent = labelText;
+            lbl.style.cssText = `
+                position: absolute;
+                right: 8px;
+                top: ${Math.round(yPos - 6)}px;
+                color: ${textColor};
+                font-family: 'Manrope', system-ui, sans-serif;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1;
+            `;
+            yAxisEl.appendChild(lbl);
+        }
+        if (yAxisElRight) {
+            const lbl = document.createElement("div");
+            lbl.textContent = labelText;
+            lbl.style.cssText = `
+                position: absolute;
+                left: 8px;
+                top: ${Math.round(yPos - 6)}px;
+                color: ${textColor};
+                font-family: 'Manrope', system-ui, sans-serif;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1;
+            `;
+            yAxisElRight.appendChild(lbl);
+        }
+    }
+}
+
 function drawBarChart(canvasId, yAxisId, scrollId, labels, dayKeys, dayStats, selectedCats, daySiteLogs) {
     const scrollEl = document.getElementById(scrollId);
     if (scrollEl) {
@@ -2250,16 +2305,9 @@ function drawBarChart(canvasId, yAxisId, scrollId, labels, dayKeys, dayStats, se
     const canvasEl = document.getElementById(canvasId);
     if (!canvasEl || !scrollEl) return;
 
-    const existingChart = Chart.getChart(canvasEl);
-    if (existingChart) {
-        existingChart.destroy();
-    }
-    _barChartInstance = null;
-
     const containerWidth = scrollEl.parentElement.clientWidth || 800;
     const chartWidth = Math.max(containerWidth - 100, 80 * labels.length);
     
-    // Dynamic wrapper to ensure the parent container scrolls horizontally instead of squeezing the canvas
     let wrapper = canvasEl.parentElement;
     if (wrapper.id !== canvasId + '-wrapper') {
         wrapper = document.createElement('div');
@@ -2271,41 +2319,22 @@ function drawBarChart(canvasId, yAxisId, scrollId, labels, dayKeys, dayStats, se
     wrapper.style.height = "450px";
     wrapper.style.position = "relative";
 
+    const dpr = window.devicePixelRatio || 1;
+    canvasEl.width = chartWidth * dpr;
+    canvasEl.height = 450 * dpr;
+    canvasEl.style.width = chartWidth + "px";
+    canvasEl.style.height = "450px";
+
+    const ctx = canvasEl.getContext("2d");
+    ctx.scale(dpr, dpr);
+
     const isLight = document.documentElement.classList.contains("light");
     const textColor = isLight ? "#0f172a" : "#ffffff";
+    const textMuted = isLight ? "rgba(15, 23, 42, 0.6)" : "rgba(255, 255, 255, 0.6)";
     const gridColor = isLight ? "rgba(15, 23, 42, 0.04)" : "rgba(255, 255, 255, 0.04)";
 
-    const datasets = [];
     const activeCats = selectedCats.length ? selectedCats : ["uncategorized"];
-    
-    const catGradients = {
-        productivity: { solid: catColor('productivity'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('productivity'), 0.15) : 'rgba(5, 213, 129, 0.15)') },
-        learning: { solid: catColor('learning'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('learning'), 0.15) : 'rgba(168, 85, 247, 0.15)') },
-        communication: { solid: catColor('communication'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('communication'), 0.15) : 'rgba(92, 156, 252, 0.15)') },
-        distraction: { solid: catColor('distraction'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('distraction'), 0.15) : 'rgba(244, 107, 122, 0.15)') },
-        uncategorized: { solid: catColor('uncategorized'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('uncategorized'), 0.15) : 'rgba(113, 113, 122, 0.15)') }
-    };
-    
     let maxVal = 0;
-    activeCats.forEach(cat => {
-        const data = dayKeys.map(dayKey => {
-            return Math.max(0, Math.round((dayStats[dayKey] && dayStats[dayKey][cat] || 0) / 60));
-        });
-        
-        const colors = catGradients[cat] || catGradients.uncategorized;
-        
-        datasets.push({
-            label: t_("cat" + cat.charAt(0).toUpperCase() + cat.slice(1)) || CAT_LABELS[cat],
-            data: data,
-            backgroundColor: colors.solid,
-            borderRadius: 0,
-            barPercentage: 0.8,
-            categoryPercentage: 0.8,
-            maxBarThickness: 32
-        });
-    });
-
-    // Calculate the maximum daily total across all categories to scale the stacked bar chart correctly
     dayKeys.forEach(dayKey => {
         let dayTotal = 0;
         activeCats.forEach(cat => {
@@ -2324,233 +2353,160 @@ function drawBarChart(canvasId, yAxisId, scrollId, labels, dayKeys, dayStats, se
     const avgMins = dayKeys.length > 0 ? (totalDailyMins / dayKeys.length) : 0;
     const avgLabel = avgMins >= 60 ? (avgMins / 60).toFixed(1) + "h" : Math.round(avgMins) + "m";
 
-    const avgLinePlugin = {
-        id: 'avgLine',
-        afterDraw: (chart) => {
-            const { ctx, scales, chartArea } = chart;
-            const showAvg = $("tog-trend-avg") && $("tog-trend-avg").checked;
-            if (!scales.y || avgMins <= 0 || !showAvg) return;
-            
-            const yVal = scales.y.getPixelForValue(avgMins);
-            if (!isFinite(yVal) || yVal < chartArea.top || yVal > chartArea.bottom) return;
-            
-            ctx.save();
+    const topPad = 30;
+    const bottomPad = 50;
+    const plotH = 450 - topPad - bottomPad;
+    const colW = chartWidth / labels.length;
+
+    renderYAxisLabels(yAxisId, maxVal, topPad, bottomPad, plotH, textColor);
+
+    function render(hoveredColIdx = -1, hoveredCat = null) {
+        ctx.clearRect(0, 0, chartWidth, 450);
+
+        // 1. Grid lines
+        ctx.save();
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        for (let s = 0; s <= 4; s++) {
+            const yPos = topPad + plotH - (s / 4) * plotH;
             ctx.beginPath();
+            ctx.moveTo(0, yPos);
+            ctx.lineTo(chartWidth, yPos);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // 2. Average line
+        const showAvg = $("tog-trend-avg") && $("tog-trend-avg").checked;
+        if (showAvg && avgMins > 0) {
+            const avgY = topPad + plotH - Math.min(1, avgMins / maxVal) * plotH;
+            ctx.save();
             ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.35)';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([4, 4]);
-            ctx.moveTo(chartArea.left, yVal);
-            ctx.lineTo(chartArea.right, yVal);
+            ctx.beginPath();
+            ctx.moveTo(0, avgY);
+            ctx.lineTo(chartWidth, avgY);
             ctx.stroke();
-            
+
             ctx.fillStyle = isLight ? '#0f172a' : '#ffffff';
             ctx.font = 'bold 11px "Manrope", sans-serif';
             ctx.textBaseline = 'bottom';
             ctx.textAlign = 'right';
-            const labelText = `AVG: ${avgLabel}`;
-            ctx.fillText(labelText, chartArea.right - 8, yVal - 4);
+            ctx.fillText(`AVG: ${avgLabel}`, chartWidth - 8, avgY - 4);
             ctx.restore();
         }
-    };
 
-    // Dynamic Y-axis alignment plugin (populates both left and right stationary axes)
-    const alignYAxisPlugin = {
-        id: 'alignYAxis',
-        afterLayout: (chart) => {
-            const yAxisEl = document.getElementById(yAxisId);
-            if (yAxisEl) {
-                yAxisEl.textContent = "";
-                yAxisEl.style.display = 'flex';
-                yAxisEl.style.position = "absolute";
-                yAxisEl.style.left = "0px";
-                yAxisEl.style.top = "0px";
-                yAxisEl.style.bottom = "35px";
-                yAxisEl.style.width = "50px";
-                yAxisEl.style.zIndex = "10";
-            }
-            
-            const rightYAxisId = yAxisId + "-right";
-            const yAxisElRight = document.getElementById(rightYAxisId);
-            if (yAxisElRight) {
-                yAxisElRight.textContent = "";
-                yAxisElRight.style.display = 'flex';
-                yAxisElRight.style.position = "absolute";
-                yAxisElRight.style.right = "0px";
-                yAxisElRight.style.top = "0px";
-                yAxisElRight.style.bottom = "35px";
-                yAxisElRight.style.width = "50px";
-                yAxisElRight.style.zIndex = "10";
-            }
-            
-            const yScale = chart.scales.y;
-            if (!yScale) return;
-            const ticks = yScale.ticks;
-            
-            ticks.forEach(tick => {
-                const val = tick.value;
-                const yPos = yScale.getPixelForValue(val);
-                if (!isFinite(yPos)) return;
-                const labelText = maxVal > 90 ? (val / 60).toFixed(1) + "h" : Math.round(val) + "m";
-                
-                if (yAxisEl) {
-                    const lbl = document.createElement("div");
-                    lbl.textContent = labelText;
-                    lbl.style.cssText = `
-                        position: absolute;
-                        right: 8px;
-                        top: ${yPos - 6}px;
-                        color: ${textColor};
-                        font-weight: 700;
-                        font-size: 12px;
-                        font-family: 'Manrope', system-ui, sans-serif;
-                        line-height: 1;
-                        background: transparent;
-                        padding: 0;
-                        border: none;
-                        box-shadow: none;
-                    `;
-                    yAxisEl.appendChild(lbl);
-                }
+        // 3. Bars & X-axis Labels
+        const barW = Math.min(32, colW * 0.7);
+        dayKeys.forEach((dayKey, i) => {
+            const xCenter = (i + 0.5) * colW;
+            const barX = xCenter - barW / 2;
+            let curY = topPad + plotH;
 
-                if (yAxisElRight) {
-                    const lbl = document.createElement("div");
-                    lbl.textContent = labelText;
-                    lbl.style.cssText = `
-                        position: absolute;
-                        left: 8px;
-                        top: ${yPos - 6}px;
-                        color: ${textColor};
-                        font-weight: 700;
-                        font-size: 12px;
-                        font-family: 'Manrope', system-ui, sans-serif;
-                        line-height: 1;
-                        background: transparent;
-                        padding: 0;
-                        border: none;
-                        box-shadow: none;
-                    `;
-                    yAxisElRight.appendChild(lbl);
+            if (i === hoveredColIdx) {
+                ctx.save();
+                ctx.fillStyle = isLight ? 'rgba(15, 23, 42, 0.03)' : 'rgba(255, 255, 255, 0.03)';
+                ctx.fillRect(i * colW, topPad, colW, plotH);
+                ctx.restore();
+            }
+
+            activeCats.forEach(cat => {
+                const mins = Math.max(0, Math.round((dayStats[dayKey] && dayStats[dayKey][cat] || 0) / 60));
+                if (mins <= 0) return;
+                const h = (mins / maxVal) * plotH;
+                const topY = curY - h;
+
+                ctx.save();
+                ctx.fillStyle = catColor(cat);
+                if (hoveredColIdx === i && hoveredCat && hoveredCat !== cat) {
+                    ctx.globalAlpha = 0.5;
                 }
+                ctx.fillRect(barX, topY, barW, h);
+                ctx.restore();
+
+                curY = topY;
             });
+
+            // X-axis label
+            ctx.save();
+            ctx.fillStyle = (i === hoveredColIdx) ? textColor : textMuted;
+            ctx.font = (i === hoveredColIdx) ? "bold 12px 'Manrope', system-ui, sans-serif" : "600 12px 'Manrope', system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(labels[i] || "", xCenter, topPad + plotH + 12);
+            ctx.restore();
+        });
+    }
+
+    render();
+
+    canvasEl.onmousemove = (ev) => {
+        const rect = canvasEl.getBoundingClientRect();
+        const mouseX = ev.clientX - rect.left;
+        const mouseY = ev.clientY - rect.top;
+        const colIdx = Math.floor(mouseX / colW);
+
+        if (colIdx >= 0 && colIdx < dayKeys.length && mouseY >= topPad && mouseY <= topPad + plotH) {
+            const dayKey = dayKeys[colIdx];
+            let curY = topPad + plotH;
+            let matchedCat = null;
+            let matchedVal = 0;
+
+            activeCats.forEach(cat => {
+                const mins = Math.max(0, Math.round((dayStats[dayKey] && dayStats[dayKey][cat] || 0) / 60));
+                if (mins <= 0) return;
+                const h = (mins / maxVal) * plotH;
+                const topY = curY - h;
+                if (mouseY >= topY && mouseY <= curY) {
+                    matchedCat = cat;
+                    matchedVal = mins;
+                }
+                curY = topY;
+            });
+
+            if (!matchedCat && activeCats.length > 0) {
+                matchedCat = activeCats.find(cat => (dayStats[dayKey]?.[cat] || 0) > 0) || activeCats[0];
+                matchedVal = Math.max(0, Math.round((dayStats[dayKey]?.[matchedCat] || 0) / 60));
+            }
+
+            render(colIdx, matchedCat);
+
+            if (matchedCat) {
+                let sites = daySiteLogs[dayKey] || {};
+                let items = [];
+                Object.entries(sites).forEach(([domain, secs]) => {
+                    if (getEffectiveCat(domain).cat === matchedCat && secs > 0) {
+                        items.push({ domain, mins: Math.round(secs / 60) });
+                    }
+                });
+                items.sort((a, b) => b.mins - a.mins);
+                let top5 = items.slice(0, 5);
+                let cColor = catColor(matchedCat);
+                let labelStr = CAT_META[matchedCat]?.label || catLabel(matchedCat, false);
+                let html = `<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--bd2);padding-bottom:6px;color:${cColor}">${labelStr} · ${fmt(60 * matchedVal)}</div>`;
+                if (top5.length === 0) {
+                    html += '<div style="font-size:12px;color:var(--tx2)">No specific sites tracked.</div>';
+                } else {
+                    top5.forEach(e => {
+                        html += `<div style="display:flex;justify-content:space-between;gap:16px;font-size:12px;margin-bottom:4px"><span>${e.domain}</span><span class="num" style="color:var(--tx2);font-weight:700">${fmt(60 * e.mins)}</span></div>`;
+                    });
+                }
+                showTooltip(ev.clientX, ev.clientY, html);
+            } else {
+                hideTooltip();
+            }
+        } else {
+            render(-1, null);
+            hideTooltip();
         }
     };
 
     canvasEl.onmouseleave = () => {
+        render(-1, null);
         hideTooltip();
     };
-
-    _barChartInstance = new Chart(canvasEl, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        plugins: [alignYAxisPlugin, avgLinePlugin],
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 20,
-                    bottom: 25
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    enabled: false,
-                    external: function(context) {
-                        const { chart, tooltip } = context;
-                        if (tooltip.opacity === 0) {
-                            hideTooltip();
-                            return;
-                        }
-                        const dataPoint = tooltip.dataPoints[0];
-                        if (!dataPoint) {
-                            hideTooltip();
-                            return;
-                        }
-                        
-                        const dataIndex = dataPoint.dataIndex;
-                        const datasetIndex = dataPoint.datasetIndex;
-                        const dayKey = dayKeys[dataIndex];
-                        const cat = activeCats[datasetIndex];
-                        const val = dataPoint.raw;
-                        
-                        let sites = daySiteLogs[dayKey] || {};
-                        let items = [];
-                        Object.entries(sites).forEach(([domain, secs]) => {
-                            if (getEffectiveCat(domain).cat === cat && secs > 0) {
-                                items.push({
-                                    domain: domain,
-                                    mins: Math.round(secs / 60)
-                                });
-                            }
-                        });
-                        items.sort((e, t) => t.mins - e.mins);
-                        let top5 = items.slice(0, 5);
-                        let cColor = catColor(cat);
-                        let html = `<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--bd2);padding-bottom:6px;color:${cColor}">${CAT_META[cat].label} · ${fmt(60 * val)}</div>`;
-                        if (top5.length === 0) {
-                            html += '<div style="font-size:12px;color:var(--tx2)">No specific sites tracked.</div>';
-                        } else {
-                            top5.forEach(e => {
-                                html += `<div style="display:flex;justify-content:space-between;gap:16px;font-size:12px;margin-bottom:4px"><span>${e.domain}</span><span class="num" style="color:var(--tx2);font-weight:700">${fmt(60 * e.mins)}</span></div>`;
-                            });
-                        }
-                        
-                        showTooltip(mouseX, mouseY, html);
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    stacked: true,
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: textColor,
-                        font: {
-                            family: "'Manrope', system-ui, sans-serif",
-                            weight: '700',
-                            size: 12
-                        }
-                    }
-                },
-                y: {
-                    stacked: true,
-                    position: 'left',
-                    min: 0,
-                    max: maxVal,
-                    grid: {
-                        color: gridColor,
-                        drawBorder: false,
-                        borderDash: [5, 5]
-                    },
-                    ticks: {
-                        display: false,
-                        stepSize: maxVal / 4
-                    }
-                },
-                yRight: {
-                    stacked: true,
-                    position: 'right',
-                    min: 0,
-                    max: maxVal,
-                    grid: {
-                        drawOnChartArea: false,
-                        drawBorder: false
-                    },
-                    ticks: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
 
     setTimeout(() => {
         scrollEl.scrollLeft = scrollEl.scrollWidth;
@@ -2568,16 +2524,9 @@ function drawTrendChart(canvasId, yAxisId, scrollId, labels, prod, learn, comm, 
     const canvasEl = document.getElementById(canvasId);
     if (!canvasEl || !scrollEl) return;
 
-    const existingChart = Chart.getChart(canvasEl);
-    if (existingChart) {
-        existingChart.destroy();
-    }
-    _trendChartInstance = null;
-
     const containerWidth = scrollEl.parentElement.clientWidth || 800;
     const chartWidth = Math.max(containerWidth - 100, 80 * labels.length);
     
-    // Dynamic wrapper to ensure the parent container scrolls horizontally instead of squeezing the canvas
     let wrapper = canvasEl.parentElement;
     if (wrapper.id !== canvasId + '-wrapper') {
         wrapper = document.createElement('div');
@@ -2589,314 +2538,192 @@ function drawTrendChart(canvasId, yAxisId, scrollId, labels, prod, learn, comm, 
     wrapper.style.height = "450px";
     wrapper.style.position = "relative";
 
+    const dpr = window.devicePixelRatio || 1;
+    canvasEl.width = chartWidth * dpr;
+    canvasEl.height = 450 * dpr;
+    canvasEl.style.width = chartWidth + "px";
+    canvasEl.style.height = "450px";
+
+    const ctx = canvasEl.getContext("2d");
+    ctx.scale(dpr, dpr);
+
     const isLight = document.documentElement.classList.contains("light");
     const textColor = isLight ? "#0f172a" : "#ffffff";
+    const textMuted = isLight ? "rgba(15, 23, 42, 0.6)" : "rgba(255, 255, 255, 0.6)";
     const gridColor = isLight ? "rgba(15, 23, 42, 0.04)" : "rgba(255, 255, 255, 0.04)";
 
-    const catGradients = {
-        productivity: { solid: catColor('productivity'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('productivity'), 0.15) : 'rgba(5, 213, 129, 0.15)') },
-        learning: { solid: catColor('learning'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('learning'), 0.15) : 'rgba(168, 85, 247, 0.15)') },
-        communication: { solid: catColor('communication'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('communication'), 0.15) : 'rgba(92, 156, 252, 0.15)') },
-        distraction: { solid: catColor('distraction'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('distraction'), 0.15) : 'rgba(244, 107, 122, 0.15)') },
-        uncategorized: { solid: catColor('uncategorized'), fade: (typeof hexToRgba === "function" ? hexToRgba(catColor('uncategorized'), 0.15) : 'rgba(113, 113, 122, 0.15)') }
-    };
-
-    const datasets = [];
     const categories = [
-        { key: 'productivity', label: catLabel('productivity', !1), data: prod },
-        { key: 'learning', label: catLabel('learning', !1), data: learn },
-        { key: 'communication', label: catLabel('communication', !1), data: comm },
-        { key: 'distraction', label: catLabel('distraction', !1), data: dist },
-        { key: 'uncategorized', label: catLabel('uncategorized', !1), data: unc }
-    ];
+        { key: 'productivity', label: catLabel('productivity', !1), data: prod, color: catColor('productivity'), dash: [] },
+        { key: 'learning', label: catLabel('learning', !1), data: learn, color: catColor('learning'), dash: [] },
+        { key: 'communication', label: catLabel('communication', !1), data: comm, color: catColor('communication'), dash: [2, 2] },
+        { key: 'distraction', label: catLabel('distraction', !1), data: dist, color: catColor('distraction'), dash: [6, 4] },
+        { key: 'uncategorized', label: catLabel('uncategorized', !1), data: unc, color: catColor('uncategorized'), dash: [4, 4] }
+    ].filter(c => c.data && c.data.length);
 
-    const dashStyles = {
-        productivity: [],
-        learning: [],
-        communication: [2, 2],
-        distraction: [6, 4],
-        uncategorized: [4, 4]
-    };
-
-    categories.forEach(cat => {
-        if (cat.data && cat.data.length) {
-            const colors = catGradients[cat.key] || catGradients.uncategorized;
-            datasets.push({
-                label: cat.label,
-                data: cat.data,
-                borderColor: colors.solid,
-                borderDash: dashStyles[cat.key] || [],
-                backgroundColor: function(context) {
-                    const chart = context.chart;
-                    const {ctx, chartArea} = chart;
-                    if (!chartArea || !isFinite(chartArea.top) || !isFinite(chartArea.bottom)) return colors.fade;
-                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    gradient.addColorStop(0, colors.fade);
-                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                    return gradient;
-                },
-                borderWidth: 3,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointBackgroundColor: colors.solid,
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 1.5
-            });
-        }
+    let maxVal = 0;
+    categories.forEach(c => {
+        c.data.forEach(v => { if (v > maxVal) maxVal = v; });
     });
+    maxVal = Math.max(60, maxVal);
 
-    const showAvg = $("tog-trend-avg") && $("tog-trend-avg").checked;
-    if (showAvg) {
-        let focusSum = [];
-        for (let idx = 0; idx < labels.length; idx++) {
-            let pVal = prod ? (prod[idx] || 0) : 0;
-            let lVal = learn ? (learn[idx] || 0) : 0;
-            focusSum.push(pVal + lVal);
-        }
-        const avgVal = focusSum.reduce((a, b) => a + b, 0) / Math.max(1, focusSum.length);
-        const avgData = new Array(labels.length).fill(Math.round(avgVal));
-        
-        datasets.push({
-            label: t_("averageFocus") || 'Average Focus',
-            data: avgData,
-            borderColor: 'rgba(5, 213, 129, 0.45)',
-            backgroundColor: 'transparent',
-            borderWidth: 2,
-            borderDash: [6, 6],
-            fill: false,
-            pointRadius: 0,
-            pointHoverRadius: 0,
-            tension: 0
+    const topPad = 30;
+    const bottomPad = 50;
+    const plotH = 450 - topPad - bottomPad;
+    const colW = chartWidth / labels.length;
+
+    renderYAxisLabels(yAxisId, maxVal, topPad, bottomPad, plotH, textColor);
+
+    function getPoints(data) {
+        return data.map((v, i) => {
+            const x = (i + 0.5) * colW;
+            const y = topPad + plotH - Math.max(0, Math.min(1, v / maxVal)) * plotH;
+            return { x, y, val: v };
         });
     }
 
-    let maxVal = 0;
-    datasets.forEach(ds => {
-        ds.data.forEach(val => {
-            if (val > maxVal) maxVal = val;
+    function render(hoveredIdx = -1) {
+        ctx.clearRect(0, 0, chartWidth, 450);
+
+        // 1. Grid lines
+        ctx.save();
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        for (let s = 0; s <= 4; s++) {
+            const yPos = topPad + plotH - (s / 4) * plotH;
+            ctx.beginPath();
+            ctx.moveTo(0, yPos);
+            ctx.lineTo(chartWidth, yPos);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // 2. Vertical guide line if hovered
+        if (hoveredIdx >= 0 && hoveredIdx < labels.length) {
+            const guideX = (hoveredIdx + 0.5) * colW;
+            ctx.save();
+            ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.2)' : 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(guideX, topPad);
+            ctx.lineTo(guideX, topPad + plotH);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // 3. Category Lines & Fills
+        categories.forEach(cat => {
+            const pts = getPoints(cat.data);
+            if (pts.length < 2) return;
+
+            // Area fill gradient
+            const grad = ctx.createLinearGradient(0, topPad, 0, topPad + plotH);
+            const fadeColor = (typeof hexToRgba === "function") ? hexToRgba(cat.color, 0.15) : 'rgba(5, 213, 129, 0.15)';
+            grad.addColorStop(0, fadeColor);
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.save();
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, topPad + plotH);
+            ctx.lineTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+                const prev = pts[i - 1];
+                const curr = pts[i];
+                const cpX = (prev.x + curr.x) / 2;
+                ctx.bezierCurveTo(cpX, prev.y, cpX, curr.y, curr.x, curr.y);
+            }
+            ctx.lineTo(pts[pts.length - 1].x, topPad + plotH);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            // Line stroke
+            ctx.save();
+            ctx.strokeStyle = cat.color;
+            ctx.lineWidth = 3;
+            ctx.setLineDash(cat.dash || []);
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+                const prev = pts[i - 1];
+                const curr = pts[i];
+                const cpX = (prev.x + curr.x) / 2;
+                ctx.bezierCurveTo(cpX, prev.y, cpX, curr.y, curr.x, curr.y);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // Highlight dot at hovered day index
+            if (hoveredIdx >= 0 && hoveredIdx < pts.length && pts[hoveredIdx].val > 0) {
+                const pt = pts[hoveredIdx];
+                ctx.save();
+                ctx.fillStyle = cat.color;
+                ctx.strokeStyle = isLight ? '#ffffff' : '#000000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
         });
-    });
-    maxVal = Math.max(60, Math.ceil(maxVal * 1.05));
 
-    // Dynamic Y-axis alignment plugin (populates both left and right stationary axes)
-    const alignYAxisPlugin = {
-        id: 'alignYAxis',
-        afterLayout: (chart) => {
-            const yAxisEl = document.getElementById(yAxisId);
-            if (yAxisEl) {
-                yAxisEl.textContent = "";
-                yAxisEl.style.display = 'flex';
-                yAxisEl.style.position = "absolute";
-                yAxisEl.style.left = "0px";
-                yAxisEl.style.top = "0px";
-                yAxisEl.style.bottom = "35px";
-                yAxisEl.style.width = "50px";
-                yAxisEl.style.zIndex = "10";
-            }
-            
-            const rightYAxisId = yAxisId + "-right";
-            const yAxisElRight = document.getElementById(rightYAxisId);
-            if (yAxisElRight) {
-                yAxisElRight.textContent = "";
-                yAxisElRight.style.display = 'flex';
-                yAxisElRight.style.position = "absolute";
-                yAxisElRight.style.right = "0px";
-                yAxisElRight.style.top = "0px";
-                yAxisElRight.style.bottom = "35px";
-                yAxisElRight.style.width = "50px";
-                yAxisElRight.style.zIndex = "10";
-            }
-            
-            const yScale = chart.scales.y;
-            if (!yScale) return;
-            const ticks = yScale.ticks;
-            
-            ticks.forEach(tick => {
-                const val = tick.value;
-                const yPos = yScale.getPixelForValue(val);
-                if (!isFinite(yPos)) return;
-                const labelText = maxVal > 90 ? (val / 60).toFixed(1) + "h" : Math.round(val) + "m";
-                
-                if (yAxisEl) {
-                    const lbl = document.createElement("div");
-                    lbl.textContent = labelText;
-                    lbl.style.cssText = `
-                        position: absolute;
-                        right: 8px;
-                        top: ${yPos - 6}px;
-                        color: ${textColor};
-                        font-weight: 700;
-                        font-size: 12px;
-                        font-family: 'Manrope', system-ui, sans-serif;
-                        line-height: 1;
-                        background: transparent;
-                        padding: 0;
-                        border: none;
-                        box-shadow: none;
-                    `;
-                    yAxisEl.appendChild(lbl);
-                }
+        // 4. X-axis Labels
+        labels.forEach((lbl, i) => {
+            const xCenter = (i + 0.5) * colW;
+            ctx.save();
+            ctx.fillStyle = (i === hoveredIdx) ? textColor : textMuted;
+            ctx.font = (i === hoveredIdx) ? "bold 12px 'Manrope', system-ui, sans-serif" : "600 12px 'Manrope', system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(lbl || "", xCenter, topPad + plotH + 12);
+            ctx.restore();
+        });
+    }
 
-                if (yAxisElRight) {
-                    const lbl = document.createElement("div");
-                    lbl.textContent = labelText;
-                    lbl.style.cssText = `
-                        position: absolute;
-                        left: 8px;
-                        top: ${yPos - 6}px;
-                        color: ${textColor};
-                        font-weight: 700;
-                        font-size: 12px;
-                        font-family: 'Manrope', system-ui, sans-serif;
-                        line-height: 1;
-                        background: transparent;
-                        padding: 0;
-                        border: none;
-                        box-shadow: none;
-                    `;
-                    yAxisElRight.appendChild(lbl);
+    render();
+
+    canvasEl.onmousemove = (ev) => {
+        const rect = canvasEl.getBoundingClientRect();
+        const mouseX = ev.clientX - rect.left;
+        const mouseY = ev.clientY - rect.top;
+        const colIdx = Math.floor(mouseX / colW);
+
+        if (colIdx >= 0 && colIdx < labels.length && mouseY >= topPad && mouseY <= topPad + plotH + 30) {
+            render(colIdx);
+
+            let html = `<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--bd2);padding-bottom:6px">${labels[colIdx]}</div>`;
+            let hasData = false;
+            categories.forEach(cat => {
+                const val = cat.data[colIdx] || 0;
+                if (val > 0) {
+                    html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:4px">
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <span style="color:${cat.color}">●</span> ${cat.label}:
+                        </div> 
+                        <span class="num" style="color:var(--tx);font-weight:700">${fmt(60 * val)}</span>
+                    </div>`;
+                    hasData = true;
                 }
             });
+
+            if (hasData) {
+                showTooltip(ev.clientX, ev.clientY, html);
+            } else {
+                hideTooltip();
+            }
+        } else {
+            render(-1);
+            hideTooltip();
         }
     };
 
     canvasEl.onmouseleave = () => {
+        render(-1);
         hideTooltip();
     };
-
-    _trendChartInstance = new Chart(canvasEl, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        plugins: [
-            alignYAxisPlugin,
-            {
-                id: 'verticalLine',
-                afterDraw: (chart) => {
-                    if (chart.tooltip?._active?.length) {
-                        const activePoint = chart.tooltip._active[0];
-                        const ctx = chart.ctx;
-                        const x = activePoint.element.x;
-                        const topY = chart.chartArea.top;
-                        const bottomY = chart.chartArea.bottom;
-                        
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.moveTo(x, topY);
-                        ctx.lineTo(x, bottomY);
-                        ctx.lineWidth = 1.5;
-                        ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.1)' : 'rgba(255, 255, 255, 0.15)';
-                        ctx.setLineDash([4, 4]);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                }
-            }
-        ],
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 20,
-                    bottom: 25
-                }
-            },
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    enabled: false,
-                    external: function(context) {
-                        const { chart, tooltip } = context;
-                        if (tooltip.opacity === 0) {
-                            hideTooltip();
-                            return;
-                        }
-                        const dataPoint = tooltip.dataPoints[0];
-                        if (!dataPoint) {
-                            hideTooltip();
-                            return;
-                        }
-                        
-                        const dataIndex = dataPoint.dataIndex;
-                        let html = `<div style="font-weight:800;margin-bottom:6px;border-bottom:1px solid var(--bd2);padding-bottom:6px">${labels[dataIndex]}</div>`;
-                        let hasData = false;
-                        
-                        chart.data.datasets.forEach(ds => {
-                            const val = ds.data[dataIndex];
-                            if (val > 0) {
-                                html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:4px">
-                                    <div style="display:flex;align-items:center;gap:6px">
-                                        <span style="color:${ds.borderColor}">●</span> ${ds.label}:
-                                    </div> 
-                                    <span class="num" style="color:var(--tx);font-weight:700">${fmt(60 * val)}</span>
-                                </div>`;
-                                hasData = true;
-                            }
-                        });
-                        
-                        if (!hasData) {
-                            hideTooltip();
-                            return;
-                        }
-                        
-                        showTooltip(mouseX, mouseY, html);
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: textColor,
-                        font: {
-                            family: "'Manrope', system-ui, sans-serif",
-                            weight: '700',
-                            size: 12
-                        }
-                    }
-                },
-                y: {
-                    position: 'left',
-                    min: 0,
-                    max: maxVal,
-                    grid: {
-                        color: gridColor,
-                        drawBorder: false,
-                        borderDash: [5, 5]
-                    },
-                    ticks: {
-                        display: false,
-                        stepSize: maxVal / 4
-                    }
-                },
-                yRight: {
-                    position: 'right',
-                    min: 0,
-                    max: maxVal,
-                    grid: {
-                        drawOnChartArea: false,
-                        drawBorder: false
-                    },
-                    ticks: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
 
     setTimeout(() => {
         scrollEl.scrollLeft = scrollEl.scrollWidth;
@@ -2992,79 +2819,104 @@ async function renderOverview() {
     // Draw circular Donut Chart
     const donutCanvas = document.getElementById("ov-donut-chart");
     if (donutCanvas) {
-        const existing = Chart.getChart(donutCanvas);
-        if (existing) {
-            existing.destroy();
-        }
-        if (_donutChartInstance) {
-            _donutChartInstance.destroy();
-        }
-        
+        const dpr = window.devicePixelRatio || 1;
+        const size = 180;
+        donutCanvas.width = size * dpr;
+        donutCanvas.height = size * dpr;
+        donutCanvas.style.width = size + "px";
+        donutCanvas.style.height = size + "px";
+
+        const ctx = donutCanvas.getContext("2d");
+        ctx.scale(dpr, dpr);
+
         const dataVals = [
-            Math.max(0, Math.round(prodSecs / 60)),
-            Math.max(0, Math.round(learnSecs / 60)),
-            Math.max(0, Math.round(commSecs / 60)),
-            Math.max(0, Math.round(distractSecs / 60)),
-            Math.max(0, Math.round(uncSecs / 60))
+            { cat: "productivity", label: catLabel("productivity", false), secs: prodSecs, color: catColor("productivity") },
+            { cat: "learning", label: catLabel("learning", false), secs: learnSecs, color: catColor("learning") },
+            { cat: "communication", label: catLabel("communication", false), secs: commSecs, color: catColor("communication") },
+            { cat: "distraction", label: catLabel("distraction", false), secs: distractSecs, color: catColor("distraction") },
+            { cat: "uncategorized", label: catLabel("uncategorized", false), secs: uncSecs, color: catColor("uncategorized") }
         ];
 
-        _donutChartInstance = new Chart(donutCanvas, {
-            type: "doughnut",
-            data: {
-                labels: [
-                    catLabel("productivity", false),
-                    catLabel("learning", false),
-                    catLabel("communication", false),
-                    catLabel("distraction", false),
-                    catLabel("uncategorized", false)
-                ],
-                datasets: [{
-                    data: dataVals,
-                    backgroundColor: [
-                        catColor("productivity"),
-                        catColor("learning"),
-                        catColor("communication"),
-                        catColor("distraction"),
-                        catColor("uncategorized")
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: {
-                    padding: 8
-                },
-                onHover: (event, activeElements) => {
-                    const target = event.chart.canvas;
-                    if (activeElements && activeElements.length > 0) {
-                        target.style.cursor = 'pointer';
-                        const activeEl = activeElements[0];
-                        const index = activeEl.index;
-                        const label = _donutChartInstance.data.labels[index];
-                        const rawSecs = [prodSecs, learnSecs, commSecs, distractSecs, uncSecs][index];
-                        
-                        if ($("ov-donut-total-lbl")) $("ov-donut-total-lbl").textContent = fmt(rawSecs);
-                        if ($("ov-donut-sub-lbl")) $("ov-donut-sub-lbl").textContent = label;
-                    } else {
-                        target.style.cursor = 'default';
-                        if ($("ov-donut-total-lbl")) $("ov-donut-total-lbl").textContent = fmt(totalSecs);
-                        if ($("ov-donut-sub-lbl")) $("ov-donut-sub-lbl").textContent = t_("tracked") || "tracked";
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        enabled: false
-                    }
-                },
-                cutout: "75%"
+        const cx = size / 2;
+        const cy = size / 2;
+        const radius = (size / 2) - 16;
+        const lineWidth = 18;
+        const total = dataVals.reduce((acc, v) => acc + v.secs, 0);
+
+        function drawDonut(hoveredIndex = -1) {
+            ctx.clearRect(0, 0, size, size);
+
+            // Empty state track
+            if (total <= 0) {
+                const isLight = document.documentElement.classList.contains("light");
+                ctx.save();
+                ctx.strokeStyle = isLight ? "rgba(15, 23, 42, 0.08)" : "rgba(255, 255, 255, 0.08)";
+                ctx.lineWidth = lineWidth;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+                return;
             }
-        });
+
+            let startAngle = -Math.PI / 2;
+            dataVals.forEach((item, idx) => {
+                if (item.secs <= 0) return;
+                const sliceAngle = (item.secs / total) * Math.PI * 2;
+                const endAngle = startAngle + sliceAngle;
+
+                ctx.save();
+                ctx.strokeStyle = item.color;
+                ctx.lineWidth = (hoveredIndex === idx) ? lineWidth + 4 : lineWidth;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, startAngle, endAngle);
+                ctx.stroke();
+                ctx.restore();
+
+                item._startAngle = startAngle;
+                item._endAngle = endAngle;
+                startAngle = endAngle;
+            });
+        }
+
+        drawDonut();
+
+        donutCanvas.onmousemove = (ev) => {
+            if (total <= 0) return;
+            const rect = donutCanvas.getBoundingClientRect();
+            const mouseX = ev.clientX - rect.left;
+            const mouseY = ev.clientY - rect.top;
+            const dx = mouseX - cx;
+            const dy = mouseY - cy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist >= radius - lineWidth && dist <= radius + lineWidth) {
+                let angle = Math.atan2(dy, dx);
+                if (angle < -Math.PI / 2) angle += Math.PI * 2;
+
+                const hoveredIdx = dataVals.findIndex(item => item.secs > 0 && angle >= item._startAngle && angle < item._endAngle);
+                if (hoveredIdx >= 0) {
+                    donutCanvas.style.cursor = 'pointer';
+                    drawDonut(hoveredIdx);
+                    const item = dataVals[hoveredIdx];
+                    if ($("ov-donut-total-lbl")) $("ov-donut-total-lbl").textContent = fmt(item.secs);
+                    if ($("ov-donut-sub-lbl")) $("ov-donut-sub-lbl").textContent = item.label;
+                    return;
+                }
+            }
+
+            donutCanvas.style.cursor = 'default';
+            drawDonut(-1);
+            if ($("ov-donut-total-lbl")) $("ov-donut-total-lbl").textContent = fmt(totalSecs);
+            if ($("ov-donut-sub-lbl")) $("ov-donut-sub-lbl").textContent = t_("tracked") || "tracked";
+        };
+
+        donutCanvas.onmouseleave = () => {
+            donutCanvas.style.cursor = 'default';
+            drawDonut(-1);
+            if ($("ov-donut-total-lbl")) $("ov-donut-total-lbl").textContent = fmt(totalSecs);
+            if ($("ov-donut-sub-lbl")) $("ov-donut-sub-lbl").textContent = t_("tracked") || "tracked";
+        };
     }
 
     // Render custom donut legend
@@ -3617,93 +3469,7 @@ async function renderTrend() {
         if (dot) dot.style.background = catColor("uncategorized");
     }
 
-    // Productivity vs Distraction Split Card
-    const focusMins = prodTotal + lrnTotal;
-    const distMins = distTotal;
-    const totalSplitMins = focusMins + distMins;
-    const splitValEl = $("insight-split-value");
-    const splitDescEl = $("insight-split-desc");
-    const focusBar = $("split-focus-bar");
-    const distBar = $("split-dist-bar");
 
-    if (splitValEl && splitDescEl && focusBar && distBar) {
-        const sparkCanvas = $("insight-split-chart");
-        const sparkContainer = $("insight-split-chart-container");
-        const sparkDivider = $("insight-split-divider");
-
-        if (totalSplitMins === 0) {
-            splitValEl.textContent = "—";
-            focusBar.style.width = "0%";
-            distBar.style.width = "0%";
-            splitDescEl.textContent = t_("noFocusDistTimeRange") || "No focus or distraction time tracked in this range.";
-            if (sparkContainer) sparkContainer.style.display = "none";
-            if (sparkDivider) sparkDivider.style.display = "none";
-            if (sparkCanvas) {
-                const existingSpark = Chart.getChart(sparkCanvas);
-                if (existingSpark) existingSpark.destroy();
-            }
-        } else {
-            const focusPct = Math.round((focusMins / totalSplitMins) * 100);
-            const distPct = 100 - focusPct;
-
-            const focusHrs = formatMinsToHours(focusMins);
-            const distHrs = formatMinsToHours(distMins);
-
-            splitValEl.innerHTML = `<span style="color:var(--green);">${t_("pctFocus", [focusPct])}</span> / <span style="color:var(--red);">${t_("pctDistraction", [distPct])}</span>`;
-            focusBar.style.width = `${focusPct}%`;
-            distBar.style.width = `${distPct}%`;
-            splitDescEl.textContent = t_("focusSplitDesc", [focusHrs, distHrs]) || `You focused for ${focusHrs} and were distracted for ${distHrs}.`;
-
-            if (sparkContainer) sparkContainer.style.display = "block";
-            if (sparkDivider) sparkDivider.style.display = "block";
-
-            if (sparkCanvas) {
-                const existingSpark = Chart.getChart(sparkCanvas);
-                if (existingSpark) existingSpark.destroy();
-
-                new Chart(sparkCanvas, {
-                    type: 'line',
-                    data: {
-                        labels: t, // t is the labels array defined at line 2841 (e.g. ['Jun 27', 'Jun 28', ...])
-                        datasets: [
-                            {
-                                label: 'Focus',
-                                data: e.map(dayKey => Math.round(((n[dayKey]?.productivity || 0) + (n[dayKey]?.learning || 0)) / 60)),
-                                borderColor: '#05D581',
-                                borderWidth: 1.5,
-                                fill: false,
-                                pointRadius: 0,
-                                pointHoverRadius: 3,
-                                tension: 0.3
-                            },
-                            {
-                                label: 'Distraction',
-                                data: e.map(dayKey => Math.round((n[dayKey]?.distraction || 0) / 60)),
-                                borderColor: '#F46B7A',
-                                borderWidth: 1.5,
-                                fill: false,
-                                pointRadius: 0,
-                                pointHoverRadius: 3,
-                                tension: 0.3
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: { enabled: true }
-                        },
-                        scales: {
-                            x: { display: false },
-                            y: { display: false }
-                        }
-                    }
-                });
-            }
-        }
-    }
 
     // Month-over-Month Comparison Card
     try {
@@ -3993,17 +3759,6 @@ async function renderGoalPreview(e) {
     $("goal-preview-bar") && ($("goal-preview-bar").style.width = Math.round(100 * i) + "%", $("goal-preview-bar").style.background = i >= 1 ? "var(--amber)" : "var(--green)"), $("goal-preview-pct") && ($("goal-preview-pct").textContent = n > 0 ? i >= 1 ? "🏆" : Math.round(100 * i) + "%" : "—", $("goal-preview-pct").style.color = i >= 1 ? "var(--amber)" : "var(--green)"), $("goal-preview-done") && ($("goal-preview-done").textContent = Math.floor(a / 3600) + "h " + Math.floor(a % 3600 / 60) + "m done"), $("goal-preview-left") && ($("goal-preview-left").textContent = n > 0 ? i >= 1 ? "Goal hit! ✓" : fmt(Math.max(0, n - a)) + " remaining" : "No goal")
 }
 
-function renderWhitelist(e) {
-    var t = $("whitelist-container");
-    t && (setSafeHTML(t, ""), e.length ? (e.forEach((e, a) => {
-        var n = document.createElement("div");
-        n.style.cssText = "display:flex;align-items:center;justify-content:space-between;background:var(--bg3);padding:10px 16px;border-radius:10px;border:1px solid var(--bd2);", setSafeHTML(n, `<span style="font-family:monospace;font-size:14px;color:var(--tx);font-weight:700">${sanitizeDomain(e)}</span><button class="bic del rm-wl" data-idx="${a}" style="width:28px;height:28px;font-size:12px">✕</button>`), t.appendChild(n)
-    }), t.querySelectorAll(".rm-wl").forEach(t => t.addEventListener("click", async () => {
-        e.splice(parseInt(t.getAttribute("data-idx")), 1), await sLocal({
-            idleWhitelist: e
-        }), renderWhitelist(e), toast(t_("removedException"), "ok")
-    }))) : setSafeHTML(t, '<span style="font-size:13px;color:var(--tx3)">No exceptions added.</span>'))
-}
 // Storage Usage Indicator Helper
 async function updateStorageUsageIndicator() {
     const textEl = $("storage-usage-text");
@@ -4076,13 +3831,7 @@ async function updateDangerCounts() {
             $("danger-count-rules").textContent = totalRules === 1 ? "1 active rule" : `${totalRules} active rules`;
         }
 
-        const locRes = await gLocal(["focusHistory", "siteCategories"]);
-        const fHist = locRes && locRes.focusHistory ? locRes.focusHistory : [];
-        if ($("danger-count-focus")) {
-            const count = Array.isArray(fHist) ? fHist.length : 0;
-            $("danger-count-focus").textContent = count === 1 ? "1 session" : `${count} sessions`;
-        }
-
+        const locRes = await gLocal(["siteCategories"]);
         const customCats = locRes && locRes.siteCategories ? locRes.siteCategories : {};
         const catKeys = Object.keys(customCats).filter(k => !k.startsWith("www."));
         if ($("danger-count-cats")) {
@@ -4114,7 +3863,6 @@ async function loadExtendedSettings(preloadedSettings) {
         $("data-retention-sel") && ($("data-retention-sel").value = e.dataRetentionDays !== undefined ? e.dataRetentionDays : 365),
         $("lang-sel") && ($("lang-sel").value = e.language || "auto"),
         upgradeAllSettingsSelects(),
-        renderWhitelist((await gLocal(["idleWhitelist"])).idleWhitelist || []), 
         $("pin-status-badge")) {
         const updateIdleBadgeVisibility = () => {
             const idleRow = $("idle-badge-row");
@@ -4129,7 +3877,9 @@ async function loadExtendedSettings(preloadedSettings) {
         updateIdleBadgeVisibility();
 
         if (e.passcodeHash) {
-            setSafeHTML($("pin-status-badge"), '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>PIN Active'), $("pin-status-badge").style.color = "var(--green)";
+            setSafeHTML($("pin-status-badge"), '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>PIN Active');
+            $("pin-status-badge").className = "pin-status-badge";
+            $("pin-status-badge").style.color = "";
             var t = $("pin-status-wrapper") || $("pin-status-badge").parentElement;
             t.style.display = "flex";
             t.style.justifyContent = "space-between";
@@ -4164,7 +3914,9 @@ async function loadExtendedSettings(preloadedSettings) {
             $("lock-adjust-time") && ($("lock-adjust-time").checked = !1 !== e.lockAdjustTime);
         } else {
             var a;
-            setSafeHTML($("pin-status-badge"), '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>Not Set'), $("pin-status-badge").style.color = "var(--tx2)";
+            setSafeHTML($("pin-status-badge"), '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>Not Set');
+            $("pin-status-badge").className = "pin-status-badge pin-not-set";
+            $("pin-status-badge").style.color = "";
             if ($("granular-locks")) $("granular-locks").style.display = "block";
             if ($("granular-locks-overlay")) { $("granular-locks-overlay").style.display = "flex"; }
             (a = document.getElementById("pin-actions-div")) && ($("btn-change-pin") && $("pin-manage-box").insertBefore($("btn-change-pin"), $("pin-manage-box").firstChild), $("btn-remove-pin") && $("pin-manage-box").insertBefore($("btn-remove-pin"), $("pin-manage-box").firstChild), a.remove()), $("pin-setup-box").style.display = "flex", $("pin-manage-box").style.display = "none"
@@ -4335,72 +4087,13 @@ async function loadExtendedSettings(preloadedSettings) {
         };
     }
 }
-async function loadFocusHistory() {
-    var e = await msg("GET_FOCUS_HISTORY"),
-        t = e?.focusHistory || [],
-        a = $("history-list");
-    if (a) {
-        if (!t.length) return setSafeHTML(a, `<div class="empty" style="padding:40px 10px">
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3; margin-bottom:16px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-      <p>${t_("noFocusSessionsYet") || "No focus sessions yet."}</p>
-      <button class="bp" id="btn-empty-start-focus" style="margin-top:16px;padding:10px 24px;">🚀 ${t_("startFirstSession") || "Start First Session"}</button>
-    </div>`), void ($("btn-empty-start-focus") && $("btn-empty-start-focus").addEventListener("click", () => {
-            $("btn-fs").click()
-        }));
-        a.textContent = "";
-        let histWithIdx = t.map((item, idx) => { item._idx = idx; return item; });
-        histWithIdx.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)).forEach(e => {
-            var t = document.createElement("div");
-            const presetMeta = {
-                pomodoro: { emoji: "🍅", name: t_("presetPomodoro") || "Pomodoro" },
-                deep_work: { emoji: "🧠", name: t_("presetDeepWork") || "Deep Work" },
-                sprint: { emoji: "⚡", name: t_("presetShortSprint") || "Short Sprint" },
-                custom: { emoji: "🌊", name: t_("presetFlow") || "Flow" }
-            };
-            const pObj = presetMeta[e.presetId] || { emoji: "🎯", name: t_("focus") || "Focus" };
-            const pName = getPresetName(e.presetId, pObj.name);
-            const dateStr = new Date(e.date + "T00:00:00").toLocaleDateString(getLocale(), { weekday: "short", month: "short", day: "numeric" });
-            const timeStr = e.startedAt ? new Date(e.startedAt).toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" }) : "—";
-            t.style.cssText = "display:flex;align-items:center;padding:14px 16px;background:transparent;border:1px solid var(--bd);border-radius:12px;margin-bottom:8px;transition:var(--trans)";
-            t.onmouseover = () => t.style.borderColor = "var(--bd2)";
-            t.onmouseout = () => t.style.borderColor = "var(--bd)";
-            setSafeHTML(t, `
-               <div style="font-size:20px; width:36px;" title="${pObj.name}">${pObj.emoji}</div>
-              <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:3px; min-width:0; padding-right:8px;">
-                <div style="font-size:13px; font-weight:800; color:var(--tx); line-height:1.2;">${dateStr} <span style="opacity:0.5; font-weight:500; margin-left:2px; white-space:nowrap;">${timeStr}</span></div>
-                <div style="font-size:12px; font-weight:600; color:var(--tx2); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.isSchedule ? (t_("scheduledSession") || "Scheduled Session") : pName}</div>
-              </div>
-              <div style="text-align:right; display:flex; flex-direction:column; justify-content:center; padding-left:8px;">
-                <div class="num" style="font-size:14px; font-weight:800; color:var(--tx);">${e.durationMins || 0}<span style="font-size:10px; opacity:0.6; margin-left:2px;">m</span></div>
-                ${e.cyclesCompleted && !e.isSchedule ? `<div class="num" style="font-size:12px; font-weight:600; color:var(--tx3);">${e.cyclesCompleted} cycle${e.cyclesCompleted === 1 ? '' : 's'}</div>` : ``}
-              </div>
-              <button class="bic del-fs" style="margin-left:16px; background:transparent; border-color:transparent; color:var(--tx3);" data-idx="${e._idx}">✕</button>
-            `);
-a.appendChild(t)
-        });
-        a.querySelectorAll(".del-fs").forEach(btn => {
-            btn.addEventListener("click", async () => {
-                const idx = parseInt(btn.getAttribute("data-idx"));
-                await msg("DELETE_FOCUS_SESSION", { idx: idx });
-                if (typeof toast === "function") toast(t_("sessionDeleted"), "ok");
-                loadFocusHistory();
-            });
-        });
-    }
-} ["tog-ov-prod", "tog-ov-lrn", "tog-ov-dist", "tog-ov-comm", "tog-ov-unc"].forEach(e => {
+async function loadFocusHistory() {} 
+["tog-ov-prod", "tog-ov-lrn", "tog-ov-dist", "tog-ov-comm", "tog-ov-unc"].forEach(e => {
     $(e) && $(e).addEventListener("change", renderOverview)
 }), ["tog-trend-prod", "tog-trend-lrn", "tog-trend-comm", "tog-trend-dist", "tog-trend-unc", "tog-trend-avg"].forEach(e => {
     $(e) && $(e).addEventListener("change", renderTrend)
 }), $("weekly-goal-input") && $("weekly-goal-input").addEventListener("input", () => {
     renderGoalPreview(parseInt($("weekly-goal-input").value) || 0)
-}), $("btn-add-whitelist") && $("btn-add-whitelist").addEventListener("click", async () => {
-    var e = $("whitelist-inp").value.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
-    if (e) {
-        var t = (await gLocal(["idleWhitelist"])).idleWhitelist || [];
-        t.includes(e) ? toast(t_("alreadyAdded"), "er") : (t.push(e), await sLocal({
-            idleWhitelist: t
-        }), $("whitelist-inp").value = "", renderWhitelist(t), toast(t_("exceptionAdded"), "ok"))
-    }
 });
 
 const btnSaveSetEl = document.getElementById("btn-save-set");
@@ -4532,10 +4225,6 @@ btnRemovePin && btnRemovePin.addEventListener("click", async () => {
         loadAnalytics();
         updateDangerCounts();
         toast(t_("categoriesCleared") || "Categories reset to defaults", "ok");
-    }
-}), $("btn-clr-focus") && $("btn-clr-focus").addEventListener("click", async () => {
-    if (await promptPinIfEnabled("lockDanger") && await showConfirm(t_("clearFocusHistory"), t_("clearFocusConfirm"), { isDestructive: true, confirmText: t_("clearConfirmBtn") })) {
-        await msg("CLEAR_FOCUS_HISTORY"), loadFocusHistory(), updateDangerCounts(), toast(t_("cleared"), "ok")
     }
 });
 
@@ -5788,18 +5477,11 @@ if ($("file-migrate-wt")) $("file-migrate-wt").addEventListener("change", async 
       display: flex; flex-direction: column; gap: 24px; min-width: 0; height: 100%;
     }
     #tab-focus .focus-layout .card { margin: 0 !important; }
-    #tab-focus .focus-layout #history-list { flex: 1; overflow-y: auto; max-height: 350px !important; padding-right: 6px; }
-    #tab-focus .focus-layout .ff-history-card {
-      flex: 1 !important; height: auto !important; min-height: 320px !important; display: flex; flex-direction: column;
-    }
     #tab-focus .focus-layout #focus-allowlist-container {
       max-height: 280px !important; overflow-y: auto; padding-right: 6px;
     }
-    #tab-focus .focus-layout #history-list::-webkit-scrollbar,
     #tab-focus .focus-layout #focus-allowlist-container::-webkit-scrollbar { width: 6px; }
-    #tab-focus .focus-layout #history-list::-webkit-scrollbar-track,
     #tab-focus .focus-layout #focus-allowlist-container::-webkit-scrollbar-track { background: transparent; }
-    #tab-focus .focus-layout #history-list::-webkit-scrollbar-thumb,
     #tab-focus .focus-layout #focus-allowlist-container::-webkit-scrollbar-thumb { background: var(--bd2); border-radius: 10px; }
     @media (max-width: 1024px) {
       #tab-focus .focus-layout { grid-template-columns: 1fr !important; }

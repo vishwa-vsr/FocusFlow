@@ -94,7 +94,7 @@
         <button class="vtab act" data-atab="overview" data-i18n="overview">Overview</button>
         <button class="vtab" data-atab="daily" data-i18n="dailyBreakdown">Daily Breakdown</button>
         <button class="vtab" data-atab="topsites" data-i18n="topSites">Top Sites</button>
-        <button class="vtab" data-atab="trend" data-i18n="studyVsDistraction">Study vs Distraction</button>
+        <button class="vtab" data-atab="trend" data-i18n="comparison">Comparison</button>
       </div>
 
       <div id="atab-overview">
@@ -470,38 +470,6 @@
             <div id="trend-bar-y-axis-right" class="y-axis y-axis-right"></div>
           </div>
         </div>
-
-        <!-- Comparison Smart Insights Grid -->
-        <div class="compact-grid" id="trend-insights-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 16px; gap: 16px; align-items: stretch;">
-          
-          <!-- Card 2: Productivity vs Distraction Split -->
-          <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px; height: 100%; box-sizing: border-box;">
-            <div style="font-size: 11px; font-weight: 800; color: var(--tx3); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 8px;">
-              <span data-icon="pie-chart" data-size="14" style="color:var(--tx3);"></span>
-              <span data-i18n="focusVsDistraction">Focus vs. Distraction</span>
-            </div>
-            
-            <div style="display: flex; gap: 16px; align-items: center; width: 100%;">
-              <!-- Left side: Sparkline (35% width) -->
-              <div id="insight-split-chart-container" style="width: 35%; flex-shrink: 0; height: 65px; position: relative;">
-                <canvas id="insight-split-chart"></canvas>
-              </div>
-              
-              <!-- Bold straight line (vertical divider - taller) -->
-              <div id="insight-split-divider" style="width: 3px; background: var(--tx2); height: 95px; border-radius: 1.5px; flex-shrink: 0; align-self: center;"></div>
-              
-              <!-- Right side: Stats and descriptions (65% width) -->
-              <div style="width: 65%; flex-grow: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-left: 4px;">
-                <div id="insight-split-value" style="font-size: 15px; font-weight: 800; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Calculating...</div>
-                <div style="width: 100%; height: 8px; background: var(--bg4); border-radius: 4px; overflow: hidden; display: flex;">
-                  <div id="split-focus-bar" style="height: 100%; background: var(--green); width: 0%; transition: width 0.3s;"></div>
-                  <div id="split-dist-bar" style="height: 100%; background: var(--red); width: 0%; transition: width 0.3s;"></div>
-                </div>
-                <div id="insight-split-desc" style="font-size: 11px; color: var(--tx); line-height: 1.3;">Ratio of study time to distracted time.</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
 
@@ -641,18 +609,6 @@
             </div>
           </div>
 
-          <!-- History Card -->
-          <div class="card ff-history-card" style="margin:0; display:flex; flex-direction:column;">
-            <div class="ctit" style="justify-content:space-between"><span data-i18n="history">History</span><button class="bic del"
-                id="btn-clear-history" data-i18n-title="clearHistory" aria-label="Clear History" style="width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;"><span data-icon="trash" data-icon-size="14"></span></button>
-            </div>
-            <div class="history-scroll" id="history-list">
-              <div class="empty" style="padding:40px 10px">
-                <div style="margin-bottom:12px; display:flex; justify-content:center; color:var(--tx3);"><span data-icon="calendar" data-icon-size="36"></span></div>
-                <p data-i18n="noFocusSessions">No focus sessions yet.</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -887,27 +843,8 @@
 
           </div>
 
-          <!-- Column 2: Exceptions, Badge Display, Data & Rollover -->
+          <!-- Column 2: Badge Display, Data & Rollover -->
           <div class="settings-col">
-            
-            <!-- Card 3: Tracking Exceptions -->
-            <div class="card">
-              <div class="ctit" data-i18n="trackingExceptions">Tracking Exceptions</div>
-              <div class="trow" style="border-top:none;padding-top:0;padding-bottom:12px; flex-direction:column; align-items:flex-start; border-bottom:none;">
-                <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                  <div>
-                    <label for="whitelist-inp" class="tlbl" style="display:block; cursor:pointer;" data-i18n="alwaysTrackEvenIdle">Always track (even when idle)</label>
-                    <div class="tdesc" data-i18n="alwaysTrackEvenIdleDesc">Sites that always track time even when you walk away (e.g., pw.live)</div>
-                  </div>
-                </div>
-                <div style="display:flex; gap:10px; width:100%; margin-top:12px;">
-                  <input type="text" id="whitelist-inp" class="inp" data-i18n-placeholder="egRedirect" style="flex:1" />
-                  <button class="bs" id="btn-add-whitelist" data-i18n="btnAddException">+ Add Exception</button>
-                </div>
-                <div id="whitelist-container"
-                  style="display:flex; flex-direction:column; gap:8px; width:100%; margin-top:12px;"></div>
-              </div>
-            </div>
 
             <!-- Card 4: Badge Display -->
             <div class="card">
@@ -1014,8 +951,7 @@
                   <span data-i18n="accessControlSafety">Access Control & Safety</span>
                 </div>
                 <div id="pin-status-wrapper">
-                  <span id="pin-status-badge"
-                    style="padding:4px 10px; border-radius:99px; font-size:12px; font-weight:800; background:transparent; border:1px solid var(--bd); color:var(--tx2); display: inline-flex; align-items: center; gap: 4px;"><span data-icon="lock-sm" data-icon-size="12"></span><span data-i18n="notSet">Not Set</span></span>
+                  <span id="pin-status-badge" class="pin-status-badge pin-not-set"><span data-icon="lock-sm" data-icon-size="12"></span><span data-i18n="notSet">Not Set</span></span>
                 </div>
               </div>
 
@@ -1115,15 +1051,7 @@
                   <div class="tdesc" data-i18n="clearAllRulesDesc">Delete all custom site blocking rules and redirects.</div>
                 </div><button class="bs-danger" id="btn-clr-rules" data-i18n="btnClearRules">Clear Rules</button>
               </div>
-              <div class="trow">
-                <div>
-                  <div class="tlbl" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span data-i18n="clearFocusHistory">Clear Focus History</span>
-                    <span class="danger-count-badge" id="danger-count-focus">0 sessions</span>
-                  </div>
-                  <div class="tdesc" data-i18n="clearFocusHistoryDesc">Delete all recorded focus session history records.</div>
-                </div><button class="bs-danger" id="btn-clr-focus" data-i18n="btnClearFocus">Clear Focus History</button>
-              </div>
+
               <div class="trow" style="border-bottom:none;padding-bottom:0">
                 <div>
                   <div class="tlbl" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -1711,7 +1639,6 @@
     <script src="../lib/db.js"></script>
     <script src="../lib/utils.js"></script>
     <script src="../lib/i18n.js"></script>
-    <script src="../lib/chart.min.js"></script>
     <script type="module" src="dashboard.js"></script>
 </body>
 </html>

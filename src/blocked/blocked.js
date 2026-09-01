@@ -145,14 +145,21 @@ try {
 } catch (_) { }
 
 // ── Back button ───────────────────────────────────────────────────────────────
-document.getElementById("btn-back").addEventListener("click", function () {
+document.getElementById("btn-back").addEventListener("click", async function () {
   if (window.history.length > 2) {
       window.history.back();
-  } else if (typeof chrome !== "undefined" && chrome.tabs) {
-      chrome.tabs.update({ url: "chrome://newtab/" });
-  } else {
-      window.location.href = "https://www.google.com";
+      return;
   }
+  try {
+      if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.query) {
+          const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (currentTab && currentTab.id) {
+              await chrome.tabs.remove(currentTab.id);
+              return;
+          }
+      }
+  } catch (_) {}
+  window.location.href = "https://www.google.com";
 });
 
 document.getElementById("btn-set").addEventListener("click", function () {

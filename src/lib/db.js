@@ -36,7 +36,14 @@
           db.createObjectStore("meta", { keyPath: "key" });
         }
       };
-      req.onsuccess = (e) => resolve(e.target.result);
+      req.onsuccess = (e) => {
+        const db = e.target.result;
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        resolve(db);
+      };
       req.onerror = (e) => {
         dbPromise = null;
         reject(e.target.error);

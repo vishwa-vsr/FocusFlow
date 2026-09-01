@@ -18,7 +18,8 @@
     "notifications",
     "declarativeNetRequest",
     "scripting",
-    "favicon"
+    "favicon",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -41,7 +42,8 @@
         "<all_urls>"
       ],
       "exclude_matches": [
-        "*://*.chrome.google.com/*"
+        "*://*.chrome.google.com/*",
+        "*://chromewebstore.google.com/*"
       ],
       "js": [
         "content/site-tracker.js"
@@ -53,7 +55,6 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "blocked/index.html",
         "_favicon/*"
       ],
       "matches": [

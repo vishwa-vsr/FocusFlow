@@ -10,8 +10,6 @@
   </p>
 
   <p>
-    <a href="https://github.com/vishwa-vsr/Flow/actions"><img src="https://img.shields.io/github/actions/workflow/status/vishwa-vsr/Flow/build.yml?branch=main&style=flat-square&color=success" alt="Build Status"></a>
-    <a href="https://github.com/vishwa-vsr/Flow"><img src="https://img.shields.io/codefactor/grade/github/vishwa-vsr/Flow?style=flat-square&color=blue" alt="Code Quality"></a>
     <a href="https://chromewebstore.google.com/detail/flow-website-blocker-habi/heinimoclnopjnkpicmonhgichbjejcp"><img src="https://img.shields.io/chrome-web-store/users/heinimoclnopjnkpicmonhgichbjejcp?style=flat-square&color=blue&label=users" alt="Active Users"></a>
     <a href="https://github.com/vishwa-vsr/Flow/stargazers"><img src="https://img.shields.io/github/stars/vishwa-vsr/Flow?style=flat-square&color=yellow" alt="GitHub Stars"></a>
     <a href="https://github.com/vishwa-vsr/Flow/issues"><img src="https://img.shields.io/github/issues/vishwa-vsr/Flow?style=flat-square&color=blue" alt="Open Issues"></a>
@@ -63,23 +61,6 @@ Flow is a free, local-first browser extension that blocks distracting websites, 
 | 🌐 **11 Languages (i18n)** | Fully localized UI supporting English, Spanish, Simplified Chinese, Traditional Chinese (HK/TW), Japanese, German, Brazilian Portuguese, French, Korean, and Russian. |
 | 💾 **Data Backup & Migration** | Full JSON data export/import with one-click migration from legacy extensions (Webtime Tracker, Web Activity Time Tracker). |
 | 🌙 **Dark & Light Theme** | OLED-friendly dark mode and light mode, switchable from the popup. |
-
----
-
-## 📊 Comparison with Alternatives
-
-| Feature | Flow | BlockSite | StayFocusd | Freedom | Forest |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Open Source** | ✅ (GPLv3) | ❌ | ❌ | ❌ | ❌ |
-| **100% Free** | ✅ | ❌ Paid Tier | ⚠️ Partial | ❌ Subscription | ❌ Paid App |
-| **Local-Only (No Cloud Sync)** | ✅ | ❌ Cloud | ✅ | ❌ Cloud | ❌ Cloud |
-| **No Account Needed** | ✅ | ❌ Required | ✅ | ❌ Required | ❌ Required |
-| **Screen Time Tracking** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Pomodoro Focus Timer** | ✅ | ❌ | ❌ | ❌ | ✅ |
-| **Distraction Element Hiding** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **365-Day Habit Heatmap** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **PIN Lock Protection** | ✅ | ❌ Paid Tier | ❌ | ✅ | ❌ |
-| **Cross-Browser (Chrome/Edge/Firefox)** | ✅ | ✅ | ❌ Chrome only | ✅ | ✅ |
 
 ---
 

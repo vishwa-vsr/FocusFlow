@@ -719,8 +719,8 @@
     .compact-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: var(--space-sm);
-      margin-bottom: var(--space-sm)
+      gap: 16px;
+      margin-bottom: 16px;
     }
 
     .ac {
@@ -960,7 +960,7 @@
     .settings-two-col-layout {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: var(--space-xl);
+      gap: 16px;
       align-items: start;
       width: 100%;
     }
@@ -968,17 +968,17 @@
     @media (max-width: 900px) {
       .settings-two-col-layout {
         grid-template-columns: 1fr;
-        gap: var(--space-md);
+        gap: 16px;
       }
       .settings-col {
-        gap: var(--space-md) !important;
+        gap: 16px !important;
       }
     }
 
     .settings-col {
       display: flex;
       flex-direction: column;
-      gap: var(--space-xl); /* Generous 32px vertical breathing room between stacked cards */
+      gap: 16px; /* Standardized 16px vertical breathing room between stacked cards */
     }
 
     .settings-col .card {
@@ -1592,8 +1592,8 @@
     .sgrid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: var(--space-lg);
-      margin-bottom: var(--space-lg)
+      gap: 16px;
+      margin-bottom: 16px;
     }
 
     .srow {
@@ -1636,13 +1636,13 @@
     .focus-layout {
       display: grid;
       grid-template-columns: 320px 1fr 340px;
-      gap: 32px;
+      gap: 16px;
       align-items: start
     }
 
     .focus-layout .card {
       padding: 32px 24px;
-      margin-bottom: 24px
+      margin-bottom: 16px;
     }
 
     .history-scroll {
@@ -2208,7 +2208,7 @@
     .figma-companion-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
+      gap: 16px;
       margin-bottom: 16px;
     }
     @media (max-width: 1100px) {
@@ -2571,7 +2571,7 @@
     #granular-blocks-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 12px;
+      gap: 16px;
       margin-bottom: 16px;
     }
 

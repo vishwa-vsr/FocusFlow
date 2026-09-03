@@ -2035,7 +2035,15 @@ document.querySelectorAll(".nav-links .ni").forEach(e => {
             ["overview", "daily", "topsites", "trend"].forEach(name => {
                 const tab = $("atab-" + name);
                 if (tab) {
-                    tab.style.display = (name === currentATab) ? "" : "none";
+                    if (name === currentATab) {
+                        tab.style.display = "";
+                        tab.classList.remove("ff-tab-anim");
+                        void tab.offsetWidth;
+                        tab.classList.add("ff-tab-anim");
+                    } else {
+                        tab.style.display = "none";
+                        tab.classList.remove("ff-tab-anim");
+                    }
                 }
             });
             loadAnalytics();
@@ -2231,8 +2239,6 @@ function attachChartWheelScroll(scrollEl) {
 
 function renderYAxisLabels(yAxisId, maxVal, topPad, bottomPad, plotH, textColor) {
     const yAxisEl = document.getElementById(yAxisId);
-    const rightYAxisId = yAxisId + "-right";
-    const yAxisElRight = document.getElementById(rightYAxisId);
     
     if (yAxisEl) {
         yAxisEl.textContent = "";
@@ -2243,16 +2249,6 @@ function renderYAxisLabels(yAxisId, maxVal, topPad, bottomPad, plotH, textColor)
         yAxisEl.style.bottom = "35px";
         yAxisEl.style.width = "50px";
         yAxisEl.style.zIndex = "10";
-    }
-    if (yAxisElRight) {
-        yAxisElRight.textContent = "";
-        yAxisElRight.style.display = 'flex';
-        yAxisElRight.style.position = "absolute";
-        yAxisElRight.style.right = "0px";
-        yAxisElRight.style.top = "0px";
-        yAxisElRight.style.bottom = "35px";
-        yAxisElRight.style.width = "50px";
-        yAxisElRight.style.zIndex = "10";
     }
 
     const steps = 4;
@@ -2276,21 +2272,6 @@ function renderYAxisLabels(yAxisId, maxVal, topPad, bottomPad, plotH, textColor)
             `;
             yAxisEl.appendChild(lbl);
         }
-        if (yAxisElRight) {
-            const lbl = document.createElement("div");
-            lbl.textContent = labelText;
-            lbl.style.cssText = `
-                position: absolute;
-                left: 8px;
-                top: ${Math.round(yPos - 6)}px;
-                color: ${textColor};
-                font-family: 'Manrope', system-ui, sans-serif;
-                font-size: 11px;
-                font-weight: 700;
-                line-height: 1;
-            `;
-            yAxisElRight.appendChild(lbl);
-        }
     }
 }
 
@@ -2298,7 +2279,7 @@ function drawBarChart(canvasId, yAxisId, scrollId, labels, dayKeys, dayStats, se
     const scrollEl = document.getElementById(scrollId);
     if (scrollEl) {
         scrollEl.style.paddingLeft = '50px';
-        scrollEl.style.paddingRight = '50px';
+        scrollEl.style.paddingRight = '16px';
         attachChartWheelScroll(scrollEl);
     }
 
@@ -2306,7 +2287,7 @@ function drawBarChart(canvasId, yAxisId, scrollId, labels, dayKeys, dayStats, se
     if (!canvasEl || !scrollEl) return;
 
     const containerWidth = scrollEl.parentElement.clientWidth || 800;
-    const chartWidth = Math.max(containerWidth - 100, 80 * labels.length);
+    const chartWidth = Math.max(containerWidth - 66, 80 * labels.length);
     
     let wrapper = canvasEl.parentElement;
     if (wrapper.id !== canvasId + '-wrapper') {
@@ -2517,7 +2498,7 @@ function drawTrendChart(canvasId, yAxisId, scrollId, labels, prod, learn, comm, 
     const scrollEl = document.getElementById(scrollId);
     if (scrollEl) {
         scrollEl.style.paddingLeft = '50px';
-        scrollEl.style.paddingRight = '50px';
+        scrollEl.style.paddingRight = '16px';
         attachChartWheelScroll(scrollEl);
     }
 
@@ -2525,7 +2506,7 @@ function drawTrendChart(canvasId, yAxisId, scrollId, labels, prod, learn, comm, 
     if (!canvasEl || !scrollEl) return;
 
     const containerWidth = scrollEl.parentElement.clientWidth || 800;
-    const chartWidth = Math.max(containerWidth - 100, 80 * labels.length);
+    const chartWidth = Math.max(containerWidth - 66, 80 * labels.length);
     
     let wrapper = canvasEl.parentElement;
     if (wrapper.id !== canvasId + '-wrapper') {
@@ -2598,6 +2579,35 @@ function drawTrendChart(canvasId, yAxisId, scrollId, labels, prod, learn, comm, 
         }
         ctx.restore();
 
+        // 1b. Average line if enabled
+        const showAvg = $("tog-trend-avg") && $("tog-trend-avg").checked;
+        if (showAvg) {
+            let totalMins = 0;
+            categories.forEach(cat => {
+                cat.data.forEach(v => totalMins += v);
+            });
+            const avgMins = Math.round(totalMins / Math.max(1, labels.length));
+            if (avgMins > 0) {
+                const avgY = topPad + plotH - Math.min(1, avgMins / maxVal) * plotH;
+                const avgLabel = avgMins >= 60 ? (avgMins / 60).toFixed(1) + "h" : avgMins + "m";
+                ctx.save();
+                ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.35)' : 'rgba(255, 255, 255, 0.35)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(0, avgY);
+                ctx.lineTo(chartWidth, avgY);
+                ctx.stroke();
+
+                ctx.fillStyle = isLight ? '#0f172a' : '#ffffff';
+                ctx.font = 'bold 11px "Manrope", sans-serif';
+                ctx.textBaseline = 'bottom';
+                ctx.textAlign = 'right';
+                ctx.fillText(`AVG: ${avgLabel}`, chartWidth - 8, avgY - 4);
+                ctx.restore();
+            }
+        }
+
         // 2. Vertical guide line if hovered
         if (hoveredIdx >= 0 && hoveredIdx < labels.length) {
             const guideX = (hoveredIdx + 0.5) * colW;
@@ -2612,10 +2622,15 @@ function drawTrendChart(canvasId, yAxisId, scrollId, labels, prod, learn, comm, 
             ctx.restore();
         }
 
-        // 3. Category Lines & Fills
+        // 3. Category Lines & Fills (Edge-to-Edge)
         categories.forEach(cat => {
             const pts = getPoints(cat.data);
-            if (pts.length < 2) return;
+            if (pts.length < 1) return;
+
+            const firstPt = pts[0];
+            const lastPt = pts[pts.length - 1];
+            const startCpX = firstPt.x / 2;
+            const endCpX = (lastPt.x + chartWidth) / 2;
 
             // Area fill gradient
             const grad = ctx.createLinearGradient(0, topPad, 0, topPad + plotH);
@@ -2626,15 +2641,17 @@ function drawTrendChart(canvasId, yAxisId, scrollId, labels, prod, learn, comm, 
             ctx.save();
             ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.moveTo(pts[0].x, topPad + plotH);
-            ctx.lineTo(pts[0].x, pts[0].y);
+            ctx.moveTo(0, topPad + plotH);
+            ctx.lineTo(0, firstPt.y);
+            ctx.bezierCurveTo(startCpX, firstPt.y, startCpX, firstPt.y, firstPt.x, firstPt.y);
             for (let i = 1; i < pts.length; i++) {
                 const prev = pts[i - 1];
                 const curr = pts[i];
                 const cpX = (prev.x + curr.x) / 2;
                 ctx.bezierCurveTo(cpX, prev.y, cpX, curr.y, curr.x, curr.y);
             }
-            ctx.lineTo(pts[pts.length - 1].x, topPad + plotH);
+            ctx.bezierCurveTo(endCpX, lastPt.y, endCpX, lastPt.y, chartWidth, lastPt.y);
+            ctx.lineTo(chartWidth, topPad + plotH);
             ctx.closePath();
             ctx.fill();
             ctx.restore();
@@ -2645,13 +2662,15 @@ function drawTrendChart(canvasId, yAxisId, scrollId, labels, prod, learn, comm, 
             ctx.lineWidth = 3;
             ctx.setLineDash(cat.dash || []);
             ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.moveTo(0, firstPt.y);
+            ctx.bezierCurveTo(startCpX, firstPt.y, startCpX, firstPt.y, firstPt.x, firstPt.y);
             for (let i = 1; i < pts.length; i++) {
                 const prev = pts[i - 1];
                 const curr = pts[i];
                 const cpX = (prev.x + curr.x) / 2;
                 ctx.bezierCurveTo(cpX, prev.y, cpX, curr.y, curr.x, curr.y);
             }
+            ctx.bezierCurveTo(endCpX, lastPt.y, endCpX, lastPt.y, chartWidth, lastPt.y);
             ctx.stroke();
             ctx.restore();
 
@@ -2745,21 +2764,10 @@ async function renderOverview() {
         s[e] = t.sites || {}, Object.keys(t).forEach(e => {
             "sites" === e ? Object.entries(t.sites || {}).forEach(([e, t]) => i.sites[e] = (i.sites[e] || 0) + t) : "number" == typeof t[e] && (i[e] = (i[e] || 0) + t[e])
         })
-    }), $("an-total") && ($("an-total").textContent = fmt(allCats().reduce((e, t) => e + (i[t] || 0), 0))), $("an-prod") && ($("an-prod").textContent = fmt(i.productivity || 0), $("an-prod").nextElementSibling && ($("an-prod").nextElementSibling.textContent = catLabel("productivity", !1))), $("an-lrn") && ($("an-lrn").textContent = fmt(i.learning || 0), $("an-lrn").nextElementSibling && ($("an-lrn").nextElementSibling.textContent = catLabel("learning", !1))), $("an-comms") && ($("an-comms").textContent = fmt(i.communication || 0), $("an-comms").nextElementSibling && ($("an-comms").nextElementSibling.textContent = catLabel("communication", !1))), $("an-dist") && ($("an-dist").textContent = fmt(i.distraction || 0), $("an-dist").nextElementSibling && ($("an-dist").nextElementSibling.textContent = catLabel("distraction", !1)));
-    const totalsResp = await msg("STATS_GET_ALLTIME_TOTALS");
-    const totalDaysResp = await msg("STATS_GET_TOTAL_DAYS");
-    const totals = totalsResp?.allTimeTotals || {};
-    const r = Object.values(totals).reduce((sum, secs) => sum + secs, 0);
-    const l = totalDaysResp?.totalDays || 1;
-    $("at-total") && ($("at-total").textContent = fmt(r));
-    $("at-daily-avg") && ($("at-daily-avg").textContent = fmt(l > 0 ? Math.round(r / l) : 0));
-    $("at-days") && ($("at-days").textContent = l);
+    }), $("an-total") && ($("an-total").textContent = fmt(allCats().reduce((e, t) => e + (i[t] || 0), 0))), $("an-prod") && ($("an-prod").textContent = fmt(i.productivity || 0), $("an-prod").nextElementSibling && ($("an-prod").nextElementSibling.textContent = catLabel("productivity", !1))), $("an-dist") && ($("an-dist").textContent = fmt(i.distraction || 0), $("an-dist").nextElementSibling && ($("an-dist").nextElementSibling.textContent = catLabel("distraction", !1)));
     var c = await msg("STATS_GET_STREAK"),
         d = c && c.streak || {};
-    $("an-bs") && ($("an-bs").textContent = (d.bestStreak || 0) + "d"), $("an-bd") && ($("an-bd").textContent = d.bestDay ? new Date(d.bestDay + "T00:00:00").toLocaleDateString(getLocale(), {
-        month: "short",
-        day: "numeric"
-    }) : "—");
+    $("an-bs") && ($("an-bs").textContent = (d.bestStreak || 0) + "d");
     // 1. Calculate overall category totals
     const prodSecs = i.productivity || 0;
     const learnSecs = i.learning || 0;
@@ -2768,12 +2776,10 @@ async function renderOverview() {
     const uncSecs = i.uncategorized || 0;
     const totalSecs = prodSecs + learnSecs + commSecs + distractSecs + uncSecs;
 
-    // Update Figma Trend Badges & Companion Pills
+    // Update Figma Trend Badges for Overview Hero Cards
     if (totalSecs > 0) {
         const prodPct = Math.round((prodSecs / totalSecs) * 100);
-        const lrnPct = Math.round((learnSecs / totalSecs) * 100);
         const distPct = Math.round((distractSecs / totalSecs) * 100);
-        const commPct = Math.round((commSecs / totalSecs) * 100);
 
         if ($("trend-total")) {
             $("trend-total").innerHTML = `<span class="trend-icon">↑</span><span class="trend-text">${totalSecs > 3600 ? "Active" : "Today"}</span>`;
@@ -2782,33 +2788,19 @@ async function renderOverview() {
             $("trend-prod").innerHTML = `<span class="trend-icon">↑</span><span class="trend-text">+${prodPct}%</span>`;
             $("trend-prod").className = `figma-trend-badge ${prodPct >= 40 ? "positive" : ""}`;
         }
-        if ($("trend-lrn")) {
-            $("trend-lrn").innerHTML = `<span class="trend-icon">↑</span><span class="trend-text">${lrnPct}%</span>`;
-            $("trend-lrn").className = `figma-trend-badge ${lrnPct > 0 ? "positive" : ""}`;
-        }
         if ($("trend-dist")) {
             $("trend-dist").innerHTML = `<span class="trend-icon">${distPct > 25 ? "↑" : "↓"}</span><span class="trend-text">${distPct}%</span>`;
             $("trend-dist").className = `figma-trend-badge ${distPct > 35 ? "negative" : "neutral"}`;
         }
-        if ($("trend-comms")) {
-            $("trend-comms").innerHTML = `<span class="trend-icon">↑</span><span class="trend-text">${commPct}%</span>`;
-            $("trend-comms").className = "figma-trend-badge";
-        }
     } else {
         if ($("trend-total")) $("trend-total").innerHTML = `<span class="trend-icon">—</span><span class="trend-text">0m</span>`;
         if ($("trend-prod")) $("trend-prod").innerHTML = `<span class="trend-icon">—</span><span class="trend-text">0%</span>`;
-        if ($("trend-lrn")) $("trend-lrn").innerHTML = `<span class="trend-icon">—</span><span class="trend-text">0%</span>`;
         if ($("trend-dist")) $("trend-dist").innerHTML = `<span class="trend-icon">—</span><span class="trend-text">0%</span>`;
-        if ($("trend-comms")) $("trend-comms").innerHTML = `<span class="trend-icon">—</span><span class="trend-text">0%</span>`;
     }
 
     if ($("trend-streak")) {
         const streakCount = d.bestStreak || 0;
         $("trend-streak").innerHTML = `<span class="trend-icon">🔥</span><span class="trend-text">${streakCount > 0 ? streakCount + "d record" : "Record"}</span>`;
-    }
-    if ($("trend-avg")) {
-        const iconSvg = window.FlowIcons ? window.FlowIcons.get("analytics", { size: 11 }) : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
-        $("trend-avg").innerHTML = `<span class="trend-icon" style="display:inline-flex; align-items:center;">${iconSvg}</span><span class="trend-text">Pace</span>`;
     }
 
     // Update donut center label
@@ -3467,6 +3459,65 @@ async function renderTrend() {
         uncLabel.textContent = `${catLabel("uncategorized", !1)} (${formatMinsToHours(uncTotal)})`;
         const dot = $("tog-trend-unc")?.nextElementSibling;
         if (dot) dot.style.background = catColor("uncategorized");
+    }
+
+    // Update Secondary Metric Cards in Comparison Tab
+    const trendRangeMins = prodTotal + lrnTotal + commTotal + distTotal + uncTotal;
+    const lrnPct = trendRangeMins > 0 ? Math.round((lrnTotal / trendRangeMins) * 100) : 0;
+    const commPct = trendRangeMins > 0 ? Math.round((commTotal / trendRangeMins) * 100) : 0;
+
+    if ($("an-lrn")) {
+        $("an-lrn").textContent = fmt(lrnTotal * 60);
+    }
+    if ($("trend-lrn")) {
+        if (trendRangeMins > 0) {
+            $("trend-lrn").innerHTML = `<span class="trend-icon">↑</span><span class="trend-text">${lrnPct}%</span>`;
+            $("trend-lrn").className = `figma-trend-badge ${lrnPct > 0 ? "positive" : ""}`;
+        } else {
+            $("trend-lrn").innerHTML = `<span class="trend-icon">—</span><span class="trend-text">0%</span>`;
+            $("trend-lrn").className = "figma-trend-badge";
+        }
+    }
+
+    if ($("an-comms")) {
+        $("an-comms").textContent = fmt(commTotal * 60);
+    }
+    if ($("trend-comms")) {
+        if (trendRangeMins > 0) {
+            $("trend-comms").innerHTML = `<span class="trend-icon">↑</span><span class="trend-text">${commPct}%</span>`;
+            $("trend-comms").className = "figma-trend-badge";
+        } else {
+            $("trend-comms").innerHTML = `<span class="trend-icon">—</span><span class="trend-text">0%</span>`;
+            $("trend-comms").className = "figma-trend-badge";
+        }
+    }
+
+    // Lifetime Milestone Cards (Best Day, Daily Average, All-Time Total)
+    try {
+        const totalsResp = await msg("STATS_GET_ALLTIME_TOTALS");
+        const totalDaysResp = await msg("STATS_GET_TOTAL_DAYS");
+        const totals = totalsResp?.allTimeTotals || {};
+        const allTimeSecs = Object.values(totals).reduce((sum, secs) => sum + secs, 0);
+        const allTimeDays = totalDaysResp?.totalDays || 1;
+
+        if ($("at-total")) $("at-total").textContent = fmt(allTimeSecs);
+        if ($("at-daily-avg")) $("at-daily-avg").textContent = fmt(allTimeDays > 0 ? Math.round(allTimeSecs / allTimeDays) : 0);
+        if ($("at-days")) $("at-days").textContent = allTimeDays;
+
+        const streakResp = await msg("STATS_GET_STREAK");
+        const streakData = streakResp?.streak || {};
+        if ($("an-bd")) {
+            $("an-bd").textContent = streakData.bestDay ? new Date(streakData.bestDay + "T00:00:00").toLocaleDateString(getLocale(), {
+                month: "short",
+                day: "numeric"
+            }) : "—";
+        }
+        if ($("trend-avg")) {
+            const iconSvg = window.FlowIcons ? window.FlowIcons.get("analytics", { size: 11 }) : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
+            $("trend-avg").innerHTML = `<span class="trend-icon" style="display:inline-flex; align-items:center;">${iconSvg}</span><span class="trend-text">Pace</span>`;
+        }
+    } catch (err) {
+        console.error("Error loading comparison lifetime stats:", err);
     }
 
 
@@ -5930,7 +5981,7 @@ if ($("file-migrate-wt")) $("file-migrate-wt").addEventListener("change", async 
             <div class="pb-cats c-checkbox-group" id="nsched-cats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
               ${["distraction", "communication", "uncategorized", "productivity", "learning"].map(c => `
                 <label class="c-checkbox-lbl" style="padding:10px;font-size:13px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--bd);border-radius:10px;background:var(--bg3);">
-                  <input type="checkbox" value="${c}" ${(!sched.blockCats || sched.blockCats.includes(c)) ? "checked" : ""} style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;"/>
+                  <input type="checkbox" value="${c}" ${(sched.blockCats && sched.blockCats.includes(c)) ? "checked" : ""} style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;"/>
                   <span>${catEmoji(c)} ${catLabel(c, false)}</span>
                 </label>
               `).join("")}

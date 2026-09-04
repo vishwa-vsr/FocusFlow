@@ -5150,17 +5150,10 @@ if ($("file-migrate-wt")) $("file-migrate-wt").addEventListener("change", async 
     const $$ = (id) => document.getElementById(id);
 
     const DEFAULT_PRESETS = [
-        { id: "pomodoro", emoji: "🍅", name: "Pomodoro", work: 25, brk: 5, long: 15, longBrk: 15, cycles: 4, strict: false, cats: [], blockCats: [], notify: true, autoStart: true },
-        { id: "deep-work", emoji: "🧠", name: "Deep Work", work: 90, brk: 15, long: 30, longBrk: 30, cycles: 2, strict: false, cats: [], blockCats: [], notify: true, autoStart: true },
-        { id: "short-sprint", emoji: "⚡", name: "Short Sprint", work: 15, brk: 3, long: 10, longBrk: 10, cycles: 4, strict: false, cats: [], blockCats: [], notify: true, autoStart: true },
-        { id: "custom", emoji: "🌊", name: "Flow", work: 25, brk: 5, long: 15, longBrk: 15, cycles: 4, strict: false, cats: [], blockCats: [], notify: true, autoStart: true },
-    ];
-    const getCatsList = () => [
-        { v: "distraction", l: `${catEmoji("distraction")} ${catLabel("distraction", false)}` },
-        { v: "communication", l: `${catEmoji("communication")} ${catLabel("communication", false)}` },
-        { v: "uncategorized", l: `${catEmoji("uncategorized")} ${catLabel("uncategorized", false)}` },
-        { v: "productivity", l: `${catEmoji("productivity")} ${catLabel("productivity", false)}` },
-        { v: "learning", l: `${catEmoji("learning")} ${catLabel("learning", false)}` },
+        { id: "pomodoro", emoji: "🍅", name: "Pomodoro", work: 25, brk: 5, long: 15, longBrk: 15, cycles: 4, strict: false, notify: true, autoStart: true },
+        { id: "deep-work", emoji: "🧠", name: "Deep Work", work: 90, brk: 15, long: 30, longBrk: 30, cycles: 2, strict: false, notify: true, autoStart: true },
+        { id: "short-sprint", emoji: "⚡", name: "Short Sprint", work: 15, brk: 3, long: 10, longBrk: 10, cycles: 4, strict: false, notify: true, autoStart: true },
+        { id: "custom", emoji: "🌊", name: "Flow", work: 25, brk: 5, long: 15, longBrk: 15, cycles: 4, strict: false, notify: true, autoStart: true },
     ];
 
     async function loadStore() {
@@ -5175,15 +5168,11 @@ if ($("file-migrate-wt")) $("file-migrate-wt").addEventListener("change", async 
                     if (item.autoStart === undefined) item.autoStart = true;
                     if (item.long !== undefined && item.longBrk === undefined) item.longBrk = item.long;
                     if (item.longBrk !== undefined && item.long === undefined) item.long = item.longBrk;
-                    if (item.cats !== undefined && item.blockCats === undefined) item.blockCats = item.cats;
-                    if (item.blockCats !== undefined && item.cats === undefined) item.cats = item.blockCats;
-                    if (item.cats === undefined && item.blockCats === undefined) {
-                        item.cats = [];
-                        item.blockCats = [];
-                    }
+                    delete item.cats;
+                    delete item.blockCats;
                 });
                 if (!presetsList.some(x => x.id === "custom")) {
-                    presetsList.push({ id: "custom", emoji: "🌊", name: "Flow", work: 25, brk: 5, long: 15, longBrk: 15, cycles: 4, strict: false, cats: [], blockCats: [] });
+                    presetsList.push({ id: "custom", emoji: "🌊", name: "Flow", work: 25, brk: 5, long: 15, longBrk: 15, cycles: 4, strict: false, notify: true, autoStart: true });
                 }
                 return { list: presetsList, activeId, editingId: "pomodoro" };
             }
@@ -5328,7 +5317,6 @@ if ($("file-migrate-wt")) $("file-migrate-wt").addEventListener("change", async 
 
         function showEditPresetModal(presetId) {
             showEditPresetModalModule(presetId, state, {
-                getCatsList: getCatsList,
                 onSave: async (p) => {
                     saveStore(state);
                     renderAll();
@@ -5379,7 +5367,7 @@ if ($("file-migrate-wt")) $("file-migrate-wt").addEventListener("change", async 
         nav.className = "sm-tabs";
         setSafeHTML(nav, `
       <button type="button" class="sm-tab is-active" data-pane="sites" data-i18n="siteList">${t_("siteList") || "Site List"}</button>
-      <button type="button" class="sm-tab" data-pane="presets" data-i18n="smartPresetsAndCategories">${t_("smartPresetsAndCategories") || "Smart Presets & Categories"}</button>
+      <button type="button" class="sm-tab" data-pane="presets" data-i18n="smartPresetsAndCategories">${t_("smartPresetsAndCategories") || "Website Categories"}</button>
       <button type="button" class="sm-tab" data-pane="tweaks" data-i18n="advancedTweaks">${t_("advancedTweaks") || "Advanced Tweaks"}</button>
     `);
         const ph = sm.querySelector(".ph");
@@ -5976,17 +5964,6 @@ if ($("file-migrate-wt")) $("file-migrate-wt").addEventListener("change", async 
             <div style="display:flex;gap:6px;flex-wrap:wrap;">${DAY_CBS}</div>
           </div>
 
-          <div class="pb-cats-section" id="nsched-cats-sec">
-            <div class="pb-cats-title" style="font-size:13px;font-weight:800;color:var(--tx2);text-transform:uppercase;margin-bottom:12px;" data-i18n="categoriesToBlock">Categories to Block</div>
-            <div class="pb-cats c-checkbox-group" id="nsched-cats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              ${["distraction", "communication", "uncategorized", "productivity", "learning"].map(c => `
-                <label class="c-checkbox-lbl" style="padding:10px;font-size:13px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--bd);border-radius:10px;background:var(--bg3);">
-                  <input type="checkbox" value="${c}" ${(sched.blockCats && sched.blockCats.includes(c)) ? "checked" : ""} style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;"/>
-                  <span>${catEmoji(c)} ${catLabel(c, false)}</span>
-                </label>
-              `).join("")}
-            </div>
-          </div>
           <div class="pb-strict-row" style="padding-top:16px;border-top:1px solid var(--bd)">
             <div>
               <label for="nsched-notify-time" class="tlbl" style="font-size:14px; display:inline-flex; align-items:center; gap:6px; cursor:pointer;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--amber); vertical-align:middle; display:inline-block;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg><span data-i18n="preScheduleNotification">Pre-Schedule Notification</span></label>
@@ -6014,9 +5991,6 @@ document.body.appendChild(overlay);
             upgradeSelectToCustomDropdown(notifySel);
         }
 
-        const catsSec = overlay.querySelector("#nsched-cats-sec");
-        const catsInputs = catsSec.querySelectorAll("input");
-
         document.getElementById("nsched-cancel").addEventListener("click", () => overlay.remove());
         document.getElementById("nsched-close").addEventListener("click", () => overlay.remove());
         document.getElementById("nsched-save").addEventListener("click", async () => {
@@ -6026,14 +6000,15 @@ document.body.appendChild(overlay);
             const days = Array.from(overlay.querySelectorAll(".nsched-day:checked")).map(cb => parseInt(cb.value));
             if (!days.length) { if (typeof toast === "function") toast(t_("selectAtLeastOneDay"), "er"); return; }
             const strict = false;
-            const cats = Array.from(overlay.querySelectorAll("#nsched-cats input:checked")).map(cb => cb.value);
             const notify = parseInt(document.getElementById("nsched-notify-time").value) || 0;
             const sv = (await gSync(["settings"])).settings || {};
             const scheds = sv.focusSchedules || [];
             if (isEdit) {
-                scheds[editIdx] = { ...scheds[editIdx], label, days, startTime, endTime, strict, blockCats: cats, notifyMinsBefore: notify };
+                const updated = { ...scheds[editIdx], label, days, startTime, endTime, strict, notifyMinsBefore: notify };
+                delete updated.blockCats;
+                scheds[editIdx] = updated;
             } else {
-                scheds.push({ id: uid(), label, days, startTime, endTime, enabled: true, strict, blockCats: cats, notifyMinsBefore: notify });
+                scheds.push({ id: uid(), label, days, startTime, endTime, enabled: true, strict, notifyMinsBefore: notify });
             }
 
             await sSync({ settings: { ...sv, focusSchedules: scheds } });

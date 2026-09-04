@@ -5,13 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [10.1.1.1] - 2026-09-03
+## [10.1.1.1] - 2026-09-04
 
 ### Changed
+- **Simplified Focus Mode & Schedules**: Completely removed category-based blocking from Focus sessions and recurring schedules. Focus mode now strictly blocks websites you have explicitly added to your Block List with Focus Mode enabled (plus 24/7 blocked sites), preventing accidental lockouts of study, research, and communication tools.
+- **Streamlined Preset & Schedule Windows**: Removed the "Categories to Block" section and all checkboxes from the preset edit popup (Pomodoro, Deep Work, Short Sprint, Flow) and Focus Schedule creation windows, keeping them clean and focused only on timers, breaks, and schedules.
+- **Website Categories Tab Renamed**: Renamed the Site Manager navigation tab from *"Smart Presets & Categories"* to **"Website Categories"** to clearly reflect that it is dedicated to labeling sites for time tracking and statistics.
 - **Lighter & Faster Charts**: Replaced heavy external charting software with lightweight built-in graphics, making the extension smaller and much faster to load.
 - **Unified Card Spacing**: Standardized the gaps between cards to a clean, consistent 16px across all tabs in the dashboard.
 - **Comparison Tab Cleanup**: Moved secondary metric cards from Overview to the Comparison tab, and made trend lines glide smoothly from edge to edge without harsh vertical cuts.
-- **Safer Focus Schedules**: New focus schedules now start with all category checkboxes unchecked by default so your work tools aren't accidentally blocked.
 
 ### Fixed
 - **Restored Tab Slide Animation**: Brought back the smooth upward slide and fade-in animation when switching between Analytics sub-tabs.

@@ -757,29 +757,7 @@ let isPrivacyActive = _loc.privacyModeActive === true;
     if (!isPrivacyActive && !(o.freeTimeHours || []).some(t => {
         return isTimeWindowActive(t.start, t.end, t.days);
     })) {
-        if (focusState.active && "work" === focusState.phase && !focusState.paused) {
-            // Prefer schedule's category list if an active schedule exists
-            let t = null;
-            const activeSched = (o.focusSchedules || []).find(sc => 
-                sc.enabled !== false && 
-                sc.startTime && sc.endTime && isTimeWindowActive(sc.startTime, sc.endTime, sc.days)
-            );
-            if (activeSched && Array.isArray(activeSched.blockCats)) {
-                t = activeSched.blockCats;
-            } else {
-                const ap2 = await getActivePreset();
-                t = (ap2 && Array.isArray(ap2.blockCats)) ? ap2.blockCats : (o.focusBlockCats || ["distraction"]);
-            }
-            Object.entries(AUTO_CATEGORIES).forEach(([e, aCat]) => {
-                if (!isAllowListed(e) && !isHiddenDefault(e)) {
-                    t.includes(aCat) && (i[e] = BLOCKED_PAGE + "?r=strict");
-                }
-            }), Object.entries(a).forEach(([e, aCat]) => {
-                if (!isAllowListed(e)) {
-                    t.includes(aCat) ? i[e] = BLOCKED_PAGE + "?r=strict" : delete i[e];
-                }
-            })
-        }
+
         const e = todayKey();
         lastWarnDate !== e && (warnedSitesMemory = {}, lastWarnDate = e);
         const n = s[e]?.sites || {};
@@ -2952,9 +2930,9 @@ chrome.runtime.onStartup.addListener(async () => {
 // them as a 4th "⚙️ Custom" preset so nothing they configured is lost.
 // =====================================================================
 const FF_DEFAULT_PRESETS = [
-    { id: "pomodoro", emoji: "🍅", name: "Pomodoro", work: 25, brk: 5, longBrk: 15, cycles: 4, strict: false, blockCats: [], notify: true, autoStart: true },
-    { id: "deep_work", emoji: "🧠", name: "Deep Work", work: 90, brk: 15, longBrk: 30, cycles: 2, strict: false, blockCats: [], notify: true, autoStart: true },
-    { id: "sprint", emoji: "⚡", name: "Short Sprint", work: 15, brk: 2, longBrk: 10, cycles: 4, strict: false, blockCats: [], notify: true, autoStart: true },
+    { id: "pomodoro", emoji: "🍅", name: "Pomodoro", work: 25, brk: 5, longBrk: 15, cycles: 4, strict: false, notify: true, autoStart: true },
+    { id: "deep_work", emoji: "🧠", name: "Deep Work", work: 90, brk: 15, longBrk: 30, cycles: 2, strict: false, notify: true, autoStart: true },
+    { id: "sprint", emoji: "⚡", name: "Short Sprint", work: 15, brk: 2, longBrk: 10, cycles: 4, strict: false, notify: true, autoStart: true },
 ];
 
 async function ensurePresets() {
@@ -2987,7 +2965,6 @@ async function ensurePresets() {
                     customPreset.brk = s.focusBreak ?? customPreset.brk ?? 5;
                     customPreset.longBrk = s.focusLongBreak ?? customPreset.longBrk ?? 15;
                     customPreset.cycles = s.focusCycles ?? customPreset.cycles ?? 4;
-                    customPreset.blockCats = s.focusBlockCats ?? customPreset.blockCats ?? [];
                     changed = true;
                 }
             }
@@ -3000,15 +2977,22 @@ async function ensurePresets() {
             await sSync({ settings: s });
         }
 
-        // One-time migration: Clear all default blockCats from presets so they are unselected by default
-        if (!s.presets_blockcats_cleared_v2) {
+        // One-time migration: Cleanly remove blockCats/cats from all presets and focus schedules
+        if (!s.blockcats_removed_v3) {
             focusPresets.forEach(p => {
-                p.blockCats = [];
-                if (p.cats) p.cats = [];
+                delete p.blockCats;
+                delete p.cats;
             });
+            if (Array.isArray(s.focusSchedules)) {
+                s.focusSchedules.forEach(sc => {
+                    delete sc.blockCats;
+                });
+            }
+            delete s.focusBlockCats;
             s.presets_blockcats_cleared_v2 = true;
+            s.blockcats_removed_v3 = true;
             changed = true;
-            await sSync({ settings: s });
+            await sSync({ settings: s, focusPresets });
         }
 
         focusPresets.forEach(p => { 
@@ -3038,7 +3022,6 @@ async function ensurePresets() {
             longBrk: s.focusLongBreak ?? 15,
             cycles: s.focusCycles ?? 4,
             strict: false,
-            blockCats: s.focusBlockCats || [],
             notify: true,
             autoStart: true,
         });
@@ -3053,7 +3036,6 @@ async function ensurePresets() {
             longBrk: 15,
             cycles: 4,
             strict: false,
-            blockCats: [],
             notify: true,
             autoStart: true,
         });
@@ -3061,6 +3043,7 @@ async function ensurePresets() {
 
     s.settings_migrated_v1 = true;
     s.presets_blockcats_cleared_v2 = true;
+    s.blockcats_removed_v3 = true;
     delete s.focusWork;
     delete s.focusBreak;
     delete s.focusLongBreak;

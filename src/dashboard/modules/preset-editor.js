@@ -4,7 +4,7 @@
  */
 
 import { sanitizeDomain } from "./utils-helpers.js";
-import { getPresetName, catEmoji, catLabel } from "./category-helpers.js";
+import { getPresetName } from "./category-helpers.js";
 
 export function showEditPresetModal(presetId, state, options = {}) {
     const old = document.getElementById("ff-preset-edit-modal");
@@ -14,13 +14,6 @@ export function showEditPresetModal(presetId, state, options = {}) {
     if (!p) return;
 
     const t = (typeof t_ === "function") ? t_ : (k => k);
-    const getCatsList = options.getCatsList || (() => [
-        { v: "productivity" },
-        { v: "learning" },
-        { v: "distraction" },
-        { v: "communication" },
-        { v: "uncategorized" }
-    ]);
 
     const modalHeaderIcon = `<span style="font-size:24px;">${sanitizeDomain(p.emoji || '')}</span>`;
 
@@ -96,21 +89,6 @@ export function showEditPresetModal(presetId, state, options = {}) {
                 <span class="ttrack"></span>
               </label>
             </div>
-
-            <div id="ep-cats-section" style="display: block;">
-              <div class="slbl" style="margin-bottom:10px;">${t("categoriesToBlockDuringFocus") || "Categories to Block during focus"}</div>
-              <div id="ep-cats-grid" class="c-checkbox-group" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                ${getCatsList().map(c => {
-                  const checked = (p.cats || p.blockCats || []).includes(c.v);
-                  return `
-                    <label class="c-checkbox-lbl" style="padding:10px; font-size:13px; font-weight:700; margin:0;">
-                      <input type="checkbox" value="${c.v}" ${checked ? 'checked' : ''}/>
-                      <span>${catEmoji(c.v)} ${catLabel(c.v)}</span>
-                    </label>
-                  `;
-              }).join("")}
-              </div>
-            </div>
           </div>
 
           <div style="padding: 16px 32px 24px; border-top: 1px solid var(--bd); display: flex; gap: 12px; justify-content: flex-end; flex-shrink: 0;">
@@ -143,7 +121,6 @@ export function showEditPresetModal(presetId, state, options = {}) {
         const cycVal = Math.max(1, Math.min(12, parseInt(overlay.querySelector("#ep-cyc").value, 10) || 4));
         const notifyVal = overlay.querySelector("#ep-notify").checked;
         const autoStartVal = overlay.querySelector("#ep-autostart").checked;
-        const checkedCats = Array.from(overlay.querySelectorAll("#ep-cats-grid input:checked")).map((cb) => cb.value);
 
         p.name = nameVal;
         p.work = workVal;
@@ -153,8 +130,8 @@ export function showEditPresetModal(presetId, state, options = {}) {
         p.cycles = cycVal;
         p.notify = notifyVal;
         p.autoStart = autoStartVal;
-        p.cats = checkedCats;
-        p.blockCats = checkedCats;
+        delete p.cats;
+        delete p.blockCats;
 
         if (options.onSave) {
             await options.onSave(p);

@@ -18,8 +18,7 @@
     "notifications",
     "declarativeNetRequest",
     "scripting",
-    "favicon",
-    "tabs"
+    "favicon"
   ],
   "host_permissions": [
     "<all_urls>"
